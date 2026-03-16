@@ -4,6 +4,16 @@
 
 pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
 
+## Python Flask App — reccos-capital
+
+- **Entry point**: `main_app.py` (runs on port 8080)
+- **Framework**: Flask 3.x (Python 3.11)
+- **Routes**:
+  - `GET /` — returns `{"app": "reccos-capital", "status": "running"}`
+  - `GET /health` — returns `{"status": "ok"}`
+- **Workflow**: "Start application" — `python main_app.py`
+- **Dependencies**: Managed by `uv` in `.pythonlibs/`, declared in `pyproject.toml`
+
 ## Stack
 
 - **Monorepo tool**: pnpm workspaces
