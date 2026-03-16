@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Reccos Capital"
+version = "1.0.0"
+id = "artifacts/reccos-capital"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+localPort = 24339
+name = "web"
+paths = ["/"]
+
+[services.development]
+run = "pnpm --filter @workspace/reccos-capital run dev"
+
+[services.env]
+PORT = "24339"
+BASE_PATH = "/"
+
+[services.production]
+build = ["pnpm", "--filter", "@workspace/reccos-capital", "run", "build"]
+publicDir = "artifacts/reccos-capital/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
