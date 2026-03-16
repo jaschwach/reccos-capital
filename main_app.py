@@ -127,7 +127,7 @@ def init_db():
 
 def make_token(user_id, role):
     exp = datetime.datetime.utcnow() + datetime.timedelta(hours=app.config['JWT_EXPIRY_HOURS'])
-    payload = {'sub': user_id, 'role': role, 'exp': exp}
+    payload = {'sub': str(user_id), 'role': role, 'exp': exp}
     return jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
 
 
@@ -148,7 +148,7 @@ def get_current_user():
     if not payload:
         return None
     db = get_db()
-    row = db.execute('SELECT * FROM users WHERE id = ? AND is_active = 1', (payload['sub'],)).fetchone()
+    row = db.execute('SELECT * FROM users WHERE id = ? AND is_active = 1', (int(payload['sub']),)).fetchone()
     return row
 
 
