@@ -511,6 +511,14 @@ def api_admin_stats():
     })
 
 
+@app.route('/rpc/admin/waitlist')
+@admin_required
+def api_admin_waitlist():
+    db = get_db()
+    rows = db.execute('SELECT email, created_at FROM waitlist ORDER BY created_at DESC').fetchall()
+    return jsonify([dict(r) for r in rows])
+
+
 # ---------------------------------------------------------------------------
 # Portfolio data API
 # ---------------------------------------------------------------------------

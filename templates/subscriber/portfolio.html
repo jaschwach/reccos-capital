@@ -119,8 +119,8 @@ let chart;
 
 async function loadData() {
   const [pnlRes, tradeRes] = await Promise.all([
-    fetch('/rpc/portfolio/pnl'),
-    fetch('/rpc/portfolio/trades')
+    fetch(API_BASE + '/portfolio/pnl'),
+    fetch(API_BASE + '/portfolio/trades')
   ]);
   const pnl = await pnlRes.json();
   const trades = await tradeRes.json();

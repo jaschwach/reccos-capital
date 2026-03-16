@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "python ../../startup.py",
-    "build": "echo 'Flask app — no build step required'",
+    "build": "python ../../build_static.py",
     "serve": "python ../../startup.py",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

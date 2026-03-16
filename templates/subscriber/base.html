@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="api-base" content="/rpc">
 <title>{% block title %}Dashboard{% endblock %} — Reccos Capital</title>
 <style>
   :root {
@@ -14,7 +15,6 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; display: flex; min-height: 100vh; }
 
-  /* SIDEBAR */
   .sidebar { width: 240px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 0; flex-shrink: 0; }
   .sidebar-logo { padding: 1.5rem; border-bottom: 1px solid var(--border); font-size: 1.1rem; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
   .sidebar-nav { padding: 1rem 0; flex: 1; }
@@ -31,7 +31,6 @@
   .logout-btn { margin-top: .75rem; width: 100%; background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.2); color: #ef4444; padding: .5rem; border-radius: 7px; font-size: .82rem; font-weight: 600; cursor: pointer; transition: all .2s; }
   .logout-btn:hover { background: rgba(239,68,68,.15); }
 
-  /* MAIN */
   .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
   .topbar { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; border-bottom: 1px solid var(--border); background: var(--surface); }
   .topbar-title { font-size: 1.1rem; font-weight: 600; }
@@ -42,20 +41,17 @@
 
   .content { flex: 1; overflow-y: auto; padding: 2rem; }
 
-  /* CARDS */
   .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
   .card-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
   .card-title { font-size: .95rem; font-weight: 600; }
   .card-body { padding: 1.5rem; }
 
-  /* BADGES */
   .badge { padding: .2rem .6rem; border-radius: 999px; font-size: .72rem; font-weight: 600; }
   .badge-green { background: rgba(16,185,129,.12); color: var(--green); }
   .badge-red { background: rgba(239,68,68,.12); color: var(--red); }
   .badge-blue { background: rgba(59,130,246,.12); color: var(--accent); }
   .badge-yellow { background: rgba(245,158,11,.12); color: var(--yellow); }
 
-  /* TABLES */
   table { width: 100%; border-collapse: collapse; }
   th { text-align: left; font-size: .75rem; color: var(--muted); font-weight: 600; padding: .6rem 1rem; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: .05em; }
   td { padding: .75rem 1rem; font-size: .88rem; border-bottom: 1px solid rgba(255,255,255,.04); }
@@ -118,18 +114,16 @@
     <a href="/subscriber/settings" class="nav-item {% if active=='settings' %}active{% endif %}">
       <span class="nav-icon">⚙️</span> Settings
     </a>
-    {% if user['role'] == 'admin' %}
-    <a href="/admin" class="nav-item">
+    <a href="/admin" class="nav-item" id="admin-nav-link" style="display:none">
       <span class="nav-icon">🛡️</span> Admin
     </a>
-    {% endif %}
   </nav>
   <div class="sidebar-footer">
     <div class="user-pill">
-      <div class="user-avatar">{{ user['email'][0].upper() }}</div>
+      <div class="user-avatar" id="sb-avatar">?</div>
       <div class="user-info">
-        <div class="user-email">{{ user['email'] }}</div>
-        <div class="user-role">{{ user['role'] }}</div>
+        <div class="user-email" id="sb-email">Loading…</div>
+        <div class="user-role" id="sb-role"></div>
       </div>
     </div>
     <button class="logout-btn" onclick="logout()">Sign Out</button>
@@ -153,6 +147,8 @@
 <div class="toast" id="toast"></div>
 
 <script>
+const API_BASE = document.querySelector('meta[name="api-base"]').content;
+
 function showToast(msg, type='success') {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -161,9 +157,27 @@ function showToast(msg, type='success') {
 }
 
 async function logout() {
-  await fetch('/rpc/auth/logout', {method:'POST'});
+  await fetch(API_BASE + '/auth/logout', {method:'POST'});
   window.location.href = '/login';
 }
+
+(async () => {
+  try {
+    const res = await fetch(API_BASE + '/auth/me');
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    const u = await res.json();
+    const av = document.getElementById('sb-avatar');
+    const em = document.getElementById('sb-email');
+    const ro = document.getElementById('sb-role');
+    const al = document.getElementById('admin-nav-link');
+    if (av) av.textContent = u.email[0].toUpperCase();
+    if (em) em.textContent = u.email;
+    if (ro) ro.textContent = u.role;
+    if (al && u.role === 'admin') al.style.display = '';
+  } catch (e) {
+    window.location.href = '/login';
+  }
+})();
 </script>
 {% block scripts %}{% endblock %}
 </body>

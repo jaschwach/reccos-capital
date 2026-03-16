@@ -136,7 +136,7 @@ async function doConnect() {
   const btn = document.getElementById('connect-btn');
   btn.disabled = true; btn.textContent = 'Connecting...';
   try {
-    const res = await fetch('/rpc/broker/connect', {
+    const res = await fetch(API_BASE + '/broker/connect', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({broker: selectedBroker, api_key})
@@ -159,7 +159,7 @@ async function doConnect() {
 
 async function disconnectBroker() {
   if (!confirm('Disconnect your broker? Running strategies will be paused.')) return;
-  await fetch('/rpc/broker/disconnect', {method:'POST'});
+  await fetch(API_BASE + '/broker/disconnect', {method:'POST'});
   showToast('Broker disconnected', 'success');
   setTimeout(() => location.reload(), 1000);
 }

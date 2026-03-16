@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="api-base" content="/rpc">
 <title>Reccos Capital — AI-Powered Trading Tools</title>
 <style>
   :root {
@@ -264,13 +265,14 @@
 </footer>
 
 <script>
+const API_BASE = document.querySelector('meta[name="api-base"]').content;
 async function submitWaitlist(e) {
   e.preventDefault();
   const email = document.getElementById('wl-email').value;
   const msg = document.getElementById('waitlist-msg');
   msg.textContent = 'Submitting...';
   try {
-    const res = await fetch('/rpc/waitlist', {
+    const res = await fetch(API_BASE + '/waitlist', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({email})

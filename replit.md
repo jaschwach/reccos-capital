@@ -1,136 +1,163 @@
-# Workspace
+# Reccos Capital — SaaS Trading Platform
 
 ## Overview
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+Full-stack SaaS trading platform built with Python/Flask. The project lives in a pnpm monorepo, but the actual application is a Flask app with Jinja2 templates, JWT auth, and SQLite storage.
 
-## Reccos Capital — Full SaaS Trading Platform
+---
 
-- **Entry point**: `startup.py` → initializes DB → starts gunicorn on port 8080
-- **App**: `main_app.py` (Flask 3.x, Python 3.11)
-- **Database**: SQLite at `reccos.db` (WAL mode)
-- **Workflow**: "Start application" — `python startup.py`
-- **Dependencies**: Flask, bcrypt, PyJWT, pyotp, qrcode, Pillow, gunicorn
+## Application Architecture
 
-### Routes
-- `GET /` — Public landing page with waitlist signup
-- `GET /login` — Login page (dark theme, 2FA support)
-- `GET /subscriber/` — Portfolio dashboard (auth required)
-- `GET /subscriber/strategies` — Strategy marketplace
-- `GET /subscriber/market` — Market intelligence
-- `GET /subscriber/broker` — Broker connection
-- `GET /subscriber/settings` — Account settings + 2FA enrollment
-- `GET /admin` — Admin panel (admin role required)
+### Development
 
-### API Endpoints
-- `POST /api/auth/login` — Email/password + optional TOTP code
-- `POST /api/auth/logout`
-- `GET /api/auth/me`
-- `POST /api/auth/2fa/enroll` — Returns QR code and secret
-- `POST /api/auth/2fa/verify` — Activates 2FA, returns backup codes
-- `POST /api/auth/2fa/disable`
-- `POST /api/auth/password-reset` — request / reset actions
-- `POST /api/auth/change-password`
-- `POST /api/waitlist`
-- `GET/POST /api/admin/users`
-- `POST /api/admin/users/<id>/toggle`
-- `GET /api/portfolio/trades`
-- `GET /api/portfolio/pnl`
-- `POST /api/broker/connect`
-- `POST /api/broker/disconnect`
+| Workflow | Command | Port | Role |
+|---|---|---|---|
+| `artifacts/reccos-capital: web` | `python startup.py` | 24339 | Flask app — serves all pages **and** `/rpc/*` API routes |
+| `artifacts/api-server: API Server` | `tsx src/index.ts` | 8080 (proxy) → 8180 (Flask) | Production-only proxy; runs a second Flask instance in dev (not used for browser traffic) |
 
-### Default Admin
-- Email: `jory@andium.com`
-- Password: `ReccosCap2026!`
-- Role: `admin` (seeded on first boot)
+In dev, **all browser traffic goes to the reccos-capital workflow** (Flask on 24339). The api-server workflow is present but unused for browser requests.
 
-## Stack
+### Production
 
-- **Monorepo tool**: pnpm workspaces
-- **Node.js version**: 24
-- **Package manager**: pnpm
-- **TypeScript version**: 5.9
-- **API framework**: Express 5
-- **Database**: PostgreSQL + Drizzle ORM
-- **Validation**: Zod (`zod/v4`), `drizzle-zod`
-- **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
+| Artifact | Role |
+|---|---|
+| `artifacts/api-server` (runnable, port 8080) | Node.js proxy: spawns Flask on port 8180, listens on 8080, rewrites `/api/` → `/rpc/` before forwarding |
+| `artifacts/reccos-capital` (static, `dist/public/`) | Pre-rendered HTML files for all pages; static files use `/api/` prefix for JS fetch calls |
 
-## Structure
+**Request routing in production:**
+- `/api/*` → api-server (port 8080) → Flask (port 8180, rewritten to `/rpc/*`)
+- `/` and all page routes → static handler serving `dist/public/`
 
-```text
-artifacts-monorepo/
-├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
-├── lib/                    # Shared libraries
-│   ├── api-spec/           # OpenAPI spec + Orval codegen config
-│   ├── api-client-react/   # Generated React Query hooks
-│   ├── api-zod/            # Generated Zod schemas from OpenAPI
-│   └── db/                 # Drizzle ORM schema + DB connection
-├── scripts/                # Utility scripts (single workspace package)
-│   └── src/                # Individual .ts scripts, run via `pnpm --filter @workspace/scripts run <script>`
-├── pnpm-workspace.yaml     # pnpm workspace (artifacts/*, lib/*, lib/integrations/*, scripts)
-├── tsconfig.base.json      # Shared TS options (composite, bundler resolution, es2022)
-├── tsconfig.json           # Root TS project references
-└── package.json            # Root package with hoisted devDeps
+---
+
+## Key Files
+
+| File | Purpose |
+|---|---|
+| `main_app.py` | Flask application — all routes, auth, DB access |
+| `startup.py` | Reads `PORT` env var, starts gunicorn |
+| `build_static.py` | Generates `dist/public/` static HTML (run by `pnpm build` in reccos-capital) |
+| `reccos.db` | SQLite database (WAL mode) |
+| `templates/` | Jinja2 templates |
+| `artifacts/api-server/src/index.ts` | Node.js proxy that spawns Flask and proxies `/api/` to Flask's `/rpc/` |
+| `artifacts/api-server/dist/index.cjs` | Built production bundle (esbuild CJS) |
+| `artifacts/reccos-capital/dist/public/` | Generated static HTML for production |
+
+---
+
+## API Endpoints (Flask, `/rpc/` prefix)
+
+All endpoints use cookie-based JWT auth (`rc_token` cookie).
+
+```
+POST /rpc/auth/login          — email + password + optional TOTP code
+POST /rpc/auth/logout
+GET  /rpc/auth/me             — returns current user info
+POST /rpc/auth/2fa/enroll     — returns QR code + secret
+POST /rpc/auth/2fa/verify     — activates 2FA, returns backup codes
+POST /rpc/auth/2fa/disable
+POST /rpc/auth/password-reset — request/reset
+POST /rpc/auth/change-password
+POST /rpc/waitlist            — public; adds email to waitlist
+
+GET  /rpc/admin/users         — list all users (admin only)
+POST /rpc/admin/users         — create user (admin only)
+POST /rpc/admin/users/<id>/toggle — enable/disable user (admin only)
+GET  /rpc/admin/stats         — platform stats (admin only)
+GET  /rpc/admin/waitlist      — waitlist entries (admin only)
+
+GET  /rpc/portfolio/trades    — user's trade history
+GET  /rpc/portfolio/pnl       — portfolio P&L timeseries
+POST /rpc/broker/connect      — save broker API key
+POST /rpc/broker/disconnect   — remove broker connection
+GET  /rpc/market/intel        — market intelligence feed
+GET  /rpc/strategies          — strategy marketplace
 ```
 
-## TypeScript & Composite Projects
+**Note:** Static production pages use `/api/` prefix → api-server proxy rewrites to `/rpc/` before forwarding to Flask. Dev templates use `/rpc/` directly.
 
-Every package extends `tsconfig.base.json` which sets `composite: true`. The root `tsconfig.json` lists all packages as project references. This means:
+---
 
-- **Always typecheck from the root** — run `pnpm run typecheck` (which runs `tsc --build --emitDeclarationOnly`). This builds the full dependency graph so that cross-package imports resolve correctly. Running `tsc` inside a single package will fail if its dependencies haven't been built yet.
-- **`emitDeclarationOnly`** — we only emit `.d.ts` files during typecheck; actual JS bundling is handled by esbuild/tsx/vite...etc, not `tsc`.
-- **Project references** — when package A depends on package B, A's `tsconfig.json` must list B in its `references` array. `tsc --build` uses this to determine build order and skip up-to-date packages.
+## API Base Detection (templates)
 
-## Root Scripts
+All templates include:
+```html
+<meta name="api-base" content="/rpc">
+```
+JS reads this: `const API_BASE = document.querySelector('meta[name="api-base"]').content;`
 
-- `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
-- `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
+- **Dev templates** (Jinja2, served by Flask): `content="/rpc"` — direct Flask access
+- **Production static files** (dist/public): `content="/api"` — rewritten by build_static.py
 
-## Packages
+---
 
-### `artifacts/api-server` (`@workspace/api-server`)
+## Auth
 
-Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` for request and response validation and `@workspace/db` for persistence.
+- JWT stored in `rc_token` HttpOnly cookie (8h expiry)
+- `PyJWT v2` — `sub` claim is always a string
+- TOTP 2FA via `pyotp` + `qrcode`
+- Bcrypt password hashing
 
-- Entry: `src/index.ts` — reads `PORT`, starts Express
-- App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
-- Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
-- Depends on: `@workspace/db`, `@workspace/api-zod`
-- `pnpm --filter @workspace/api-server run dev` — run the dev server
-- `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
-- Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
+---
 
-### `lib/db` (`@workspace/db`)
+## Database (SQLite)
 
-Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client instance and schema models.
+Tables: `users`, `waitlist`, `trade_history`, `strategies`, `market_intel`, `broker_connections`
 
-- `src/index.ts` — creates a `Pool` + Drizzle instance, exports schema
-- `src/schema/index.ts` — barrel re-export of all models
-- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas (no models definitions exist right now)
-- `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)
-- Exports: `.` (pool, db, schema), `./schema` (schema only)
+Initialized via `init_db()` on startup. Seeded with admin user on first boot.
 
-Production migrations are handled by Replit when publishing. In development, we just use `pnpm --filter @workspace/db run push`, and we fallback to `pnpm --filter @workspace/db run push-force`.
+---
 
-### `lib/api-spec` (`@workspace/api-spec`)
+## Default Admin Credentials
 
-Owns the OpenAPI 3.1 spec (`openapi.yaml`) and the Orval config (`orval.config.ts`). Running codegen produces output into two sibling packages:
+- **Email**: `jory@andium.com`
+- **Password**: `ReccosCap2026!`
+- **Role**: `admin`
 
-1. `lib/api-client-react/src/generated/` — React Query hooks + fetch client
-2. `lib/api-zod/src/generated/` — Zod schemas
+---
 
-Run codegen: `pnpm --filter @workspace/api-spec run codegen`
+## Building for Production
 
-### `lib/api-zod` (`@workspace/api-zod`)
+```bash
+# 1. Generate static HTML pages (api-base switches to /api/)
+python build_static.py
 
-Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used by `api-server` for response validation.
+# 2. Build the Node.js proxy bundle
+pnpm --filter @workspace/api-server run build
+# Output: artifacts/api-server/dist/index.cjs
 
-### `lib/api-client-react` (`@workspace/api-client-react`)
+# Or run both via pnpm workspace build:
+pnpm run build
+```
 
-Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
+---
 
-### `scripts` (`@workspace/scripts`)
+## Dependencies (Python)
 
-Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+Flask, bcrypt, PyJWT, pyotp, qrcode[pil], Pillow, gunicorn
+
+---
+
+## Monorepo Structure
+
+```text
+/
+├── main_app.py              # Flask app
+├── startup.py               # gunicorn launcher
+├── build_static.py          # static HTML generator
+├── reccos.db                # SQLite database
+├── templates/               # Jinja2 templates
+│   ├── landing.html
+│   ├── login.html
+│   ├── subscriber/          # base.html + portfolio/strategies/market/broker/settings
+│   └── admin/               # index.html
+├── artifacts/
+│   ├── api-server/          # Node.js proxy (production entry point)
+│   │   ├── src/index.ts     # proxy source
+│   │   └── dist/index.cjs   # production bundle
+│   ├── reccos-capital/      # Flask web artifact
+│   │   └── dist/public/     # generated static HTML (for production)
+│   └── mockup-sandbox/      # Component preview server (Vite)
+├── lib/                     # Shared TS libraries (api-spec, api-client-react, api-zod, db)
+└── pnpm-workspace.yaml
+```
