@@ -151,7 +151,7 @@ async function doLogin(e) {
   const btn = document.getElementById('login-btn');
   btn.disabled = true; btn.textContent = 'Signing in...';
   try {
-    const res = await fetch('/api/auth/login', {
+    const res = await fetch('/rpc/auth/login', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({email, password})
@@ -178,7 +178,7 @@ async function do2FA(e) {
   hideErr('err-2fa');
   const totp_code = document.getElementById('totp-code').value.trim();
   try {
-    const res = await fetch('/api/auth/login', {
+    const res = await fetch('/rpc/auth/login', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({email: savedEmail, password: savedPw, totp_code})
@@ -199,7 +199,7 @@ async function doReset(e) {
   hideErr('err-reset');
   const email = document.getElementById('reset-email').value;
   try {
-    const res = await fetch('/api/auth/password-reset', {
+    const res = await fetch('/rpc/auth/password-reset', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({action: 'request', email})

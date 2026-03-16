@@ -157,7 +157,7 @@ def login_required(f):
     def decorated(*args, **kwargs):
         user = get_current_user()
         if not user:
-            if request.path.startswith('/api/'):
+            if request.path.startswith('/rpc/'):
                 return jsonify({'error': 'Unauthorized'}), 401
             return redirect(url_for('login_page'))
         g.current_user = user
@@ -170,7 +170,7 @@ def admin_required(f):
     def decorated(*args, **kwargs):
         user = get_current_user()
         if not user or user['role'] != 'admin':
-            if request.path.startswith('/api/'):
+            if request.path.startswith('/rpc/'):
                 return jsonify({'error': 'Forbidden'}), 403
             return redirect(url_for('login_page'))
         g.current_user = user
@@ -260,7 +260,7 @@ def admin_index():
 # Auth API
 # ---------------------------------------------------------------------------
 
-@app.route('/api/auth/login', methods=['POST'])
+@app.route('/rpc/auth/login', methods=['POST'])
 def api_login():
     data = request.get_json(force=True)
     email = (data.get('email') or '').strip().lower()
@@ -296,14 +296,14 @@ def api_login():
     return resp
 
 
-@app.route('/api/auth/logout', methods=['POST'])
+@app.route('/rpc/auth/logout', methods=['POST'])
 def api_logout():
     resp = make_response(jsonify({'ok': True}))
     resp.delete_cookie('rc_token')
     return resp
 
 
-@app.route('/api/auth/me')
+@app.route('/rpc/auth/me')
 @login_required
 def api_me():
     u = g.current_user
@@ -315,7 +315,7 @@ def api_me():
     })
 
 
-@app.route('/api/auth/2fa/enroll', methods=['POST'])
+@app.route('/rpc/auth/2fa/enroll', methods=['POST'])
 @login_required
 def api_2fa_enroll():
     u = g.current_user
@@ -337,7 +337,7 @@ def api_2fa_enroll():
     return jsonify({'secret': secret, 'qr': qr_b64})
 
 
-@app.route('/api/auth/2fa/verify', methods=['POST'])
+@app.route('/rpc/auth/2fa/verify', methods=['POST'])
 @login_required
 def api_2fa_verify():
     data = request.get_json(force=True)
@@ -361,7 +361,7 @@ def api_2fa_verify():
     return jsonify({'ok': True, 'backup_codes': backup_codes})
 
 
-@app.route('/api/auth/2fa/disable', methods=['POST'])
+@app.route('/rpc/auth/2fa/disable', methods=['POST'])
 @login_required
 def api_2fa_disable():
     data = request.get_json(force=True)
@@ -376,7 +376,7 @@ def api_2fa_disable():
     return jsonify({'ok': True})
 
 
-@app.route('/api/auth/password-reset', methods=['POST'])
+@app.route('/rpc/auth/password-reset', methods=['POST'])
 def api_password_reset():
     data = request.get_json(force=True)
     action = data.get('action')
@@ -417,7 +417,7 @@ def api_password_reset():
     return jsonify({'error': 'Unknown action'}), 400
 
 
-@app.route('/api/auth/change-password', methods=['POST'])
+@app.route('/rpc/auth/change-password', methods=['POST'])
 @login_required
 def api_change_password():
     data = request.get_json(force=True)
@@ -439,7 +439,7 @@ def api_change_password():
 # Waitlist API
 # ---------------------------------------------------------------------------
 
-@app.route('/api/waitlist', methods=['POST'])
+@app.route('/rpc/waitlist', methods=['POST'])
 def api_waitlist():
     data = request.get_json(force=True)
     email = (data.get('email') or '').strip().lower()
@@ -458,7 +458,7 @@ def api_waitlist():
 # Admin API
 # ---------------------------------------------------------------------------
 
-@app.route('/api/admin/users', methods=['GET'])
+@app.route('/rpc/admin/users', methods=['GET'])
 @admin_required
 def api_admin_users():
     db = get_db()
@@ -468,7 +468,7 @@ def api_admin_users():
     return jsonify([dict(r) for r in rows])
 
 
-@app.route('/api/admin/users', methods=['POST'])
+@app.route('/rpc/admin/users', methods=['POST'])
 @admin_required
 def api_admin_create_user():
     data = request.get_json(force=True)
@@ -487,7 +487,7 @@ def api_admin_create_user():
     return jsonify({'ok': True, 'email': email, 'temp_password': password})
 
 
-@app.route('/api/admin/users/<int:uid>/toggle', methods=['POST'])
+@app.route('/rpc/admin/users/<int:uid>/toggle', methods=['POST'])
 @admin_required
 def api_admin_toggle_user(uid):
     db = get_db()
@@ -499,7 +499,7 @@ def api_admin_toggle_user(uid):
     return jsonify({'ok': True})
 
 
-@app.route('/api/admin/stats')
+@app.route('/rpc/admin/stats')
 @admin_required
 def api_admin_stats():
     db = get_db()
@@ -515,7 +515,7 @@ def api_admin_stats():
 # Portfolio data API
 # ---------------------------------------------------------------------------
 
-@app.route('/api/portfolio/trades')
+@app.route('/rpc/portfolio/trades')
 @login_required
 def api_portfolio_trades():
     db = get_db()
@@ -526,7 +526,7 @@ def api_portfolio_trades():
     return jsonify([dict(r) for r in rows])
 
 
-@app.route('/api/portfolio/pnl')
+@app.route('/rpc/portfolio/pnl')
 @login_required
 def api_portfolio_pnl():
     import random
@@ -545,7 +545,7 @@ def api_portfolio_pnl():
 # Broker API
 # ---------------------------------------------------------------------------
 
-@app.route('/api/broker/connect', methods=['POST'])
+@app.route('/rpc/broker/connect', methods=['POST'])
 @login_required
 def api_broker_connect():
     data = request.get_json(force=True)
@@ -566,7 +566,7 @@ def api_broker_connect():
     return jsonify({'ok': True})
 
 
-@app.route('/api/broker/disconnect', methods=['POST'])
+@app.route('/rpc/broker/disconnect', methods=['POST'])
 @login_required
 def api_broker_disconnect():
     db = get_db()

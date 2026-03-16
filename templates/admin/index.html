@@ -247,7 +247,7 @@ function showToast(msg, type='success') {
 }
 
 async function logout() {
-  await fetch('/api/auth/logout', {method:'POST'});
+  await fetch('/rpc/auth/logout', {method:'POST'});
   window.location.href = '/login';
 }
 
@@ -278,7 +278,7 @@ async function createUser(e) {
   const btn = document.getElementById('create-btn');
   btn.disabled = true; btn.textContent = 'Creating...';
   try {
-    const res = await fetch('/api/admin/users', {
+    const res = await fetch('/rpc/admin/users', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({email, password: password || undefined, role})
@@ -301,7 +301,7 @@ async function createUser(e) {
 }
 
 async function toggleUser(uid, isActive) {
-  const res = await fetch('/api/admin/users/' + uid + '/toggle', {method:'POST'});
+  const res = await fetch('/rpc/admin/users/' + uid + '/toggle', {method:'POST'});
   if (res.ok) {
     showToast(isActive ? 'User disabled' : 'User enabled', 'success');
     setTimeout(() => location.reload(), 800);

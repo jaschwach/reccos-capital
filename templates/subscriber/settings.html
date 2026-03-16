@@ -134,7 +134,7 @@ async function changePassword(e) {
   const btn = document.getElementById('pw-btn');
   btn.disabled = true; btn.textContent = 'Updating...';
   try {
-    const res = await fetch('/api/auth/change-password', {
+    const res = await fetch('/rpc/auth/change-password', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({current, new_password: newPw})
@@ -157,7 +157,7 @@ async function changePassword(e) {
 async function enroll2FA() {
   document.getElementById('enroll-btn').disabled = true;
   document.getElementById('enroll-btn').textContent = 'Generating...';
-  const res = await fetch('/api/auth/2fa/enroll', {method:'POST'});
+  const res = await fetch('/rpc/auth/2fa/enroll', {method:'POST'});
   const d = await res.json();
   if (d.qr) {
     document.getElementById('qr-img').src = 'data:image/png;base64,' + d.qr;
@@ -168,7 +168,7 @@ async function enroll2FA() {
 
 async function verify2FA() {
   const code = document.getElementById('verify-code').value.trim();
-  const res = await fetch('/api/auth/2fa/verify', {
+  const res = await fetch('/rpc/auth/2fa/verify', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({code})
@@ -190,7 +190,7 @@ function showDisable2FA() {
 
 async function disable2FA() {
   const password = document.getElementById('disable-pw').value;
-  const res = await fetch('/api/auth/2fa/disable', {
+  const res = await fetch('/rpc/auth/2fa/disable', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({password})

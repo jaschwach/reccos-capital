@@ -270,7 +270,7 @@ async function submitWaitlist(e) {
   const msg = document.getElementById('waitlist-msg');
   msg.textContent = 'Submitting...';
   try {
-    const res = await fetch('/api/waitlist', {
+    const res = await fetch('/rpc/waitlist', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({email})
