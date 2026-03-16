@@ -1,0 +1,203 @@
+{% extends "subscriber/base.html" %}
+{% set active = 'settings' %}
+{% block title %}Settings{% endblock %}
+{% block page_title %}Account Settings{% endblock %}
+{% block content %}
+
+<div style="max-width:760px;">
+
+  <!-- Profile -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><span class="card-title">👤 Profile</span></div>
+    <div class="card-body">
+      <div style="display:flex;align-items:center;gap:1.2rem;margin-bottom:1.5rem;">
+        <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:700;color:#fff;">{{ user['email'][0].upper() }}</div>
+        <div>
+          <div style="font-size:1rem;font-weight:600;">{{ user['email'] }}</div>
+          <div style="font-size:.82rem;color:var(--muted);">Role: <span class="badge badge-blue">{{ user['role'] }}</span></div>
+          <div style="font-size:.82rem;color:var(--muted);margin-top:.2rem;">Member since {{ user['created_at'][:10] }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change Password -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><span class="card-title">🔑 Change Password</span></div>
+    <div class="card-body">
+      <div id="pw-err" style="display:none;color:var(--red);font-size:.85rem;margin-bottom:1rem;"></div>
+      <div id="pw-ok" style="display:none;color:var(--green);font-size:.85rem;margin-bottom:1rem;"></div>
+      <form onsubmit="changePassword(event)" style="display:flex;flex-direction:column;gap:1rem;max-width:420px;">
+        <div>
+          <label style="display:block;font-size:.83rem;color:var(--muted);margin-bottom:.4rem;">Current Password</label>
+          <input type="password" id="pw-current" placeholder="••••••••" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:.7rem 1rem;border-radius:8px;font-size:.9rem;outline:none;">
+        </div>
+        <div>
+          <label style="display:block;font-size:.83rem;color:var(--muted);margin-bottom:.4rem;">New Password</label>
+          <input type="password" id="pw-new" placeholder="Min 8 characters" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:.7rem 1rem;border-radius:8px;font-size:.9rem;outline:none;">
+        </div>
+        <div>
+          <label style="display:block;font-size:.83rem;color:var(--muted);margin-bottom:.4rem;">Confirm New Password</label>
+          <input type="password" id="pw-confirm" placeholder="Repeat password" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:.7rem 1rem;border-radius:8px;font-size:.9rem;outline:none;">
+        </div>
+        <div><button type="submit" class="btn btn-primary" id="pw-btn">Update Password</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2FA -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header">
+      <span class="card-title">🔒 Two-Factor Authentication</span>
+      {% if user['totp_enabled'] %}
+      <span class="badge badge-green">Enabled</span>
+      {% else %}
+      <span class="badge badge-red">Disabled</span>
+      {% endif %}
+    </div>
+    <div class="card-body">
+      {% if user['totp_enabled'] %}
+      <p style="color:var(--muted);font-size:.88rem;margin-bottom:1.2rem;">2FA is active. Your account is protected by Google Authenticator.</p>
+      <button class="btn btn-danger" onclick="showDisable2FA()">Disable 2FA</button>
+
+      <div id="disable-2fa-form" style="display:none;margin-top:1.2rem;padding:1.2rem;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:10px;">
+        <p style="font-size:.85rem;color:var(--muted);margin-bottom:.75rem;">Enter your password to confirm.</p>
+        <input type="password" id="disable-pw" placeholder="Password" style="width:100%;max-width:320px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:.7rem 1rem;border-radius:8px;font-size:.9rem;outline:none;margin-bottom:.75rem;">
+        <div><button class="btn btn-danger" onclick="disable2FA()">Confirm Disable</button></div>
+      </div>
+
+      {% else %}
+      <p style="color:var(--muted);font-size:.88rem;margin-bottom:1.2rem;">Add an extra layer of security using Google Authenticator or any TOTP app.</p>
+      <button class="btn btn-primary" id="enroll-btn" onclick="enroll2FA()">Enable 2FA</button>
+
+      <div id="qr-section" style="display:none;margin-top:1.5rem;">
+        <div style="display:flex;gap:2rem;align-items:flex-start;flex-wrap:wrap;">
+          <div>
+            <div style="font-weight:600;margin-bottom:.75rem;">1. Scan this QR code</div>
+            <img id="qr-img" src="" alt="QR Code" style="width:180px;height:180px;border-radius:8px;">
+          </div>
+          <div style="flex:1;min-width:200px;">
+            <div style="font-weight:600;margin-bottom:.75rem;">2. Or enter secret manually</div>
+            <div id="totp-secret" style="font-family:monospace;font-size:.85rem;background:var(--bg);border:1px solid var(--border);padding:.6rem 1rem;border-radius:6px;word-break:break-all;margin-bottom:1.2rem;"></div>
+            <div style="font-weight:600;margin-bottom:.6rem;">3. Enter verification code</div>
+            <input type="text" id="verify-code" placeholder="6-digit code" maxlength="6" inputmode="numeric" style="width:100%;max-width:200px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:.7rem 1rem;border-radius:8px;font-size:.9rem;outline:none;margin-bottom:.75rem;">
+            <div><button class="btn btn-primary" onclick="verify2FA()">Verify & Enable</button></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="backup-codes-section" style="display:none;margin-top:1.5rem;padding:1.5rem;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:10px;">
+        <div style="font-weight:600;color:var(--green);margin-bottom:.75rem;">✓ 2FA Enabled — Save Your Backup Codes</div>
+        <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Store these codes safely. Each can be used once if you lose your device.</p>
+        <div id="backup-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1rem;font-family:monospace;font-size:.9rem;"></div>
+        <button class="btn btn-ghost" onclick="location.reload()">Done</button>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Sessions -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">🖥️ Session Info</span></div>
+    <div class="card-body">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem 0;border-bottom:1px solid rgba(255,255,255,.05);">
+        <div>
+          <div style="font-size:.9rem;font-weight:600;">Current Session</div>
+          <div style="font-size:.8rem;color:var(--muted);">Active now · Browser session</div>
+        </div>
+        <span class="badge badge-green">● Active</span>
+      </div>
+      {% if user['last_login'] %}
+      <div style="padding:.75rem 0;">
+        <div style="font-size:.82rem;color:var(--muted);">Last login: {{ user['last_login'][:16] }} UTC</div>
+      </div>
+      {% endif %}
+      <button class="btn btn-ghost" style="margin-top:.5rem;" onclick="logout()">Sign Out All Sessions</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+async function changePassword(e) {
+  e.preventDefault();
+  const current = document.getElementById('pw-current').value;
+  const newPw = document.getElementById('pw-new').value;
+  const confirm = document.getElementById('pw-confirm').value;
+  document.getElementById('pw-err').style.display = 'none';
+  document.getElementById('pw-ok').style.display = 'none';
+  if (newPw !== confirm) {
+    document.getElementById('pw-err').textContent = 'Passwords do not match.';
+    document.getElementById('pw-err').style.display = 'block';
+    return;
+  }
+  const btn = document.getElementById('pw-btn');
+  btn.disabled = true; btn.textContent = 'Updating...';
+  try {
+    const res = await fetch('/api/auth/change-password', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({current, new_password: newPw})
+    });
+    const d = await res.json();
+    if (res.ok) {
+      document.getElementById('pw-ok').textContent = 'Password updated successfully!';
+      document.getElementById('pw-ok').style.display = 'block';
+      document.getElementById('pw-current').value = '';
+      document.getElementById('pw-new').value = '';
+      document.getElementById('pw-confirm').value = '';
+    } else {
+      document.getElementById('pw-err').textContent = d.error;
+      document.getElementById('pw-err').style.display = 'block';
+    }
+  } catch { document.getElementById('pw-err').textContent = 'Error. Try again.'; document.getElementById('pw-err').style.display = 'block'; }
+  btn.disabled = false; btn.textContent = 'Update Password';
+}
+
+async function enroll2FA() {
+  document.getElementById('enroll-btn').disabled = true;
+  document.getElementById('enroll-btn').textContent = 'Generating...';
+  const res = await fetch('/api/auth/2fa/enroll', {method:'POST'});
+  const d = await res.json();
+  if (d.qr) {
+    document.getElementById('qr-img').src = 'data:image/png;base64,' + d.qr;
+    document.getElementById('totp-secret').textContent = d.secret;
+    document.getElementById('qr-section').style.display = 'block';
+  }
+}
+
+async function verify2FA() {
+  const code = document.getElementById('verify-code').value.trim();
+  const res = await fetch('/api/auth/2fa/verify', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({code})
+  });
+  const d = await res.json();
+  if (res.ok) {
+    document.getElementById('qr-section').style.display = 'none';
+    const grid = document.getElementById('backup-grid');
+    grid.innerHTML = d.backup_codes.map(c => `<div style="background:var(--bg);border:1px solid var(--border);padding:.4rem .6rem;border-radius:5px;">${c}</div>`).join('');
+    document.getElementById('backup-codes-section').style.display = 'block';
+  } else {
+    showToast(d.error || 'Invalid code', 'error');
+  }
+}
+
+function showDisable2FA() {
+  document.getElementById('disable-2fa-form').style.display = 'block';
+}
+
+async function disable2FA() {
+  const password = document.getElementById('disable-pw').value;
+  const res = await fetch('/api/auth/2fa/disable', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({password})
+  });
+  const d = await res.json();
+  if (res.ok) { showToast('2FA disabled', 'success'); setTimeout(() => location.reload(), 1000); }
+  else showToast(d.error, 'error');
+}
+</script>
+{% endblock %}

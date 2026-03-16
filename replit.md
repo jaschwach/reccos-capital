@@ -4,15 +4,45 @@
 
 pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
 
-## Python Flask App — reccos-capital
+## Reccos Capital — Full SaaS Trading Platform
 
-- **Entry point**: `main_app.py` (runs on port 8080)
-- **Framework**: Flask 3.x (Python 3.11)
-- **Routes**:
-  - `GET /` — returns `{"app": "reccos-capital", "status": "running"}`
-  - `GET /health` — returns `{"status": "ok"}`
-- **Workflow**: "Start application" — `python main_app.py`
-- **Dependencies**: Managed by `uv` in `.pythonlibs/`, declared in `pyproject.toml`
+- **Entry point**: `startup.py` → initializes DB → starts gunicorn on port 8080
+- **App**: `main_app.py` (Flask 3.x, Python 3.11)
+- **Database**: SQLite at `reccos.db` (WAL mode)
+- **Workflow**: "Start application" — `python startup.py`
+- **Dependencies**: Flask, bcrypt, PyJWT, pyotp, qrcode, Pillow, gunicorn
+
+### Routes
+- `GET /` — Public landing page with waitlist signup
+- `GET /login` — Login page (dark theme, 2FA support)
+- `GET /subscriber/` — Portfolio dashboard (auth required)
+- `GET /subscriber/strategies` — Strategy marketplace
+- `GET /subscriber/market` — Market intelligence
+- `GET /subscriber/broker` — Broker connection
+- `GET /subscriber/settings` — Account settings + 2FA enrollment
+- `GET /admin` — Admin panel (admin role required)
+
+### API Endpoints
+- `POST /api/auth/login` — Email/password + optional TOTP code
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
+- `POST /api/auth/2fa/enroll` — Returns QR code and secret
+- `POST /api/auth/2fa/verify` — Activates 2FA, returns backup codes
+- `POST /api/auth/2fa/disable`
+- `POST /api/auth/password-reset` — request / reset actions
+- `POST /api/auth/change-password`
+- `POST /api/waitlist`
+- `GET/POST /api/admin/users`
+- `POST /api/admin/users/<id>/toggle`
+- `GET /api/portfolio/trades`
+- `GET /api/portfolio/pnl`
+- `POST /api/broker/connect`
+- `POST /api/broker/disconnect`
+
+### Default Admin
+- Email: `jory@andium.com`
+- Password: `ReccosCap2026!`
+- Role: `admin` (seeded on first boot)
 
 ## Stack
 

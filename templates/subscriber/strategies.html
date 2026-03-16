@@ -1,0 +1,189 @@
+{% extends "subscriber/base.html" %}
+{% set active = 'strategies' %}
+{% block title %}Strategies{% endblock %}
+{% block page_title %}Strategy Marketplace{% endblock %}
+{% block content %}
+
+<p style="color:var(--muted);margin-bottom:1.5rem;font-size:.9rem;">
+  Deploy AI-powered trading strategies to your connected broker. All strategies are continuously monitored and risk-managed.
+</p>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1.5rem;">
+
+  <!-- Dip Recovery -->
+  <div class="card" style="border-radius:14px;overflow:hidden;">
+    <div style="height:4px;background:linear-gradient(90deg,#10b981,#06b6d4);"></div>
+    <div class="card-body">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.2rem;">
+        <div>
+          <div style="font-size:1.1rem;font-weight:700;">Dip Recovery</div>
+          <div style="font-size:.8rem;color:var(--muted);margin-top:.2rem;">Mean reversion on oversold equities</div>
+        </div>
+        <span class="badge badge-green">● Live</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem;">
+        <div>
+          <div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">12-MO RETURN</div>
+          <div style="font-size:1.8rem;font-weight:700;color:var(--green);">+31.2%</div>
+        </div>
+        <div>
+          <div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">SHARPE RATIO</div>
+          <div style="font-size:1.8rem;font-weight:700;">0.81</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:1rem;padding:1rem;background:rgba(255,255,255,.03);border-radius:8px;margin-bottom:1.2rem;">
+        <div style="flex:1;text-align:center;">
+          <div style="font-size:.72rem;color:var(--muted);">WIN RATE</div>
+          <div style="font-weight:600;">67%</div>
+        </div>
+        <div style="flex:1;text-align:center;border-left:1px solid var(--border);">
+          <div style="font-size:.72rem;color:var(--muted);">MAX DD</div>
+          <div style="font-weight:600;color:var(--red);">-8.4%</div>
+        </div>
+        <div style="flex:1;text-align:center;border-left:1px solid var(--border);">
+          <div style="font-size:.72rem;color:var(--muted);">AVG HOLD</div>
+          <div style="font-weight:600;">3.2d</div>
+        </div>
+      </div>
+
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1.2rem;line-height:1.6;">
+        Identifies large-cap equities experiencing short-term overselling relative to sector peers. Enters on confirmed support, exits on RSI normalization. Suitable for moderate risk tolerance.
+      </p>
+
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem;">
+        <span class="badge badge-blue">Large Cap</span>
+        <span class="badge badge-blue">Mean Reversion</span>
+        <span class="badge badge-blue">Low Leverage</span>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%;" onclick="deployStrategy('Dip Recovery', this)">Deploy Strategy</button>
+    </div>
+  </div>
+
+  <!-- Rally Fade -->
+  <div class="card" style="border-radius:14px;overflow:hidden;">
+    <div style="height:4px;background:linear-gradient(90deg,#f59e0b,#ef4444);"></div>
+    <div class="card-body">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.2rem;">
+        <div>
+          <div style="font-size:1.1rem;font-weight:700;">Rally Fade</div>
+          <div style="font-size:.8rem;color:var(--muted);margin-top:.2rem;">Short overextended momentum</div>
+        </div>
+        <span class="badge badge-green">● Live</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem;">
+        <div>
+          <div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">12-MO RETURN</div>
+          <div style="font-size:1.8rem;font-weight:700;color:var(--green);">+22.7%</div>
+        </div>
+        <div>
+          <div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">SHARPE RATIO</div>
+          <div style="font-size:1.8rem;font-weight:700;">0.64</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:1rem;padding:1rem;background:rgba(255,255,255,.03);border-radius:8px;margin-bottom:1.2rem;">
+        <div style="flex:1;text-align:center;">
+          <div style="font-size:.72rem;color:var(--muted);">WIN RATE</div>
+          <div style="font-weight:600;">61%</div>
+        </div>
+        <div style="flex:1;text-align:center;border-left:1px solid var(--border);">
+          <div style="font-size:.72rem;color:var(--muted);">MAX DD</div>
+          <div style="font-weight:600;color:var(--red);">-11.2%</div>
+        </div>
+        <div style="flex:1;text-align:center;border-left:1px solid var(--border);">
+          <div style="font-size:.72rem;color:var(--muted);">AVG HOLD</div>
+          <div style="font-weight:600;">1.8d</div>
+        </div>
+      </div>
+
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1.2rem;line-height:1.6;">
+        Shorts equities showing parabolic price extension with exhausted buying volume. Uses ATR-based stops and scale-in short entries at resistance. Best in choppy or bearish markets.
+      </p>
+
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem;">
+        <span class="badge badge-yellow">Short Selling</span>
+        <span class="badge badge-yellow">Momentum</span>
+        <span class="badge badge-yellow">Medium Risk</span>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%;" onclick="deployStrategy('Rally Fade', this)">Deploy Strategy</button>
+    </div>
+  </div>
+
+  <!-- High Beta Momentum -->
+  <div class="card" style="border-radius:14px;overflow:hidden;">
+    <div style="height:4px;background:linear-gradient(90deg,#8b5cf6,#3b82f6);"></div>
+    <div class="card-body">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.2rem;">
+        <div>
+          <div style="font-size:1.1rem;font-weight:700;">High Beta Momentum</div>
+          <div style="font-size:.8rem;color:var(--muted);margin-top:.2rem;">Ride institutional breakouts</div>
+        </div>
+        <span class="badge badge-blue">● Beta</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem;">
+        <div>
+          <div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">12-MO RETURN</div>
+          <div style="font-size:1.8rem;font-weight:700;color:var(--green);">+41.9%</div>
+        </div>
+        <div>
+          <div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">SHARPE RATIO</div>
+          <div style="font-size:1.8rem;font-weight:700;">0.72</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:1rem;padding:1rem;background:rgba(255,255,255,.03);border-radius:8px;margin-bottom:1.2rem;">
+        <div style="flex:1;text-align:center;">
+          <div style="font-size:.72rem;color:var(--muted);">WIN RATE</div>
+          <div style="font-weight:600;">54%</div>
+        </div>
+        <div style="flex:1;text-align:center;border-left:1px solid var(--border);">
+          <div style="font-size:.72rem;color:var(--muted);">MAX DD</div>
+          <div style="font-weight:600;color:var(--red);">-19.1%</div>
+        </div>
+        <div style="flex:1;text-align:center;border-left:1px solid var(--border);">
+          <div style="font-size:.72rem;color:var(--muted);">AVG HOLD</div>
+          <div style="font-weight:600;">5.4d</div>
+        </div>
+      </div>
+
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1.2rem;line-height:1.6;">
+        Targets high-beta growth stocks breaking out on above-average institutional volume. Pyramids into winners, cuts losers quickly. Designed for aggressive growth accounts. Higher risk profile.
+      </p>
+
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem;">
+        <span class="badge" style="background:rgba(139,92,246,.12);color:#8b5cf6;">Growth</span>
+        <span class="badge" style="background:rgba(139,92,246,.12);color:#8b5cf6;">Breakout</span>
+        <span class="badge" style="background:rgba(139,92,246,.12);color:#8b5cf6;">High Risk</span>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%;" onclick="deployStrategy('High Beta Momentum', this)">Deploy Strategy</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Risk disclosure -->
+<div style="margin-top:2rem;padding:1.2rem 1.5rem;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:10px;font-size:.82rem;color:var(--muted);">
+  ⚠️ <strong style="color:var(--yellow);">Risk Disclosure:</strong> All trading strategies involve risk of loss. Past performance is not indicative of future results. You may lose some or all of your invested capital. Please ensure you have a broker connected before deploying.
+</div>
+
+<script>
+function deployStrategy(name, btn) {
+  btn.disabled = true;
+  btn.textContent = 'Deploying...';
+  setTimeout(() => {
+    showToast('Strategy "' + name + '" deployed successfully!', 'success');
+    btn.textContent = '✓ Deployed';
+    btn.style.background = 'rgba(16,185,129,.15)';
+    btn.style.color = 'var(--green)';
+    btn.style.border = '1px solid rgba(16,185,129,.3)';
+  }, 1200);
+}
+</script>
+{% endblock %}

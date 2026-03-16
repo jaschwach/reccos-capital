@@ -1,0 +1,167 @@
+{% extends "subscriber/base.html" %}
+{% set active = 'broker' %}
+{% block title %}Broker Connection{% endblock %}
+{% block page_title %}Broker Connection{% endblock %}
+{% block content %}
+
+{% if connection %}
+<div style="margin-bottom:1.5rem;padding:1.2rem 1.5rem;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:10px;display:flex;align-items:center;justify-content:space-between;">
+  <div style="display:flex;align-items:center;gap:1rem;">
+    <div style="width:40px;height:40px;border-radius:50%;background:rgba(16,185,129,.15);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">🔗</div>
+    <div>
+      <div style="font-weight:600;">Connected to {{ connection['broker'] }}</div>
+      <div style="font-size:.82rem;color:var(--muted);">API key ending ···{{ connection['api_key_last4'] }} · Connected {{ connection['connected_at'][:10] }}</div>
+    </div>
+  </div>
+  <button class="btn btn-danger" onclick="disconnectBroker()">Disconnect</button>
+</div>
+{% endif %}
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.5rem;margin-bottom:2rem;">
+
+  {% set brokers = [
+    ('Alpaca', 'alpaca', '🦙', 'Commission-free API trading. Best for algo trading and automation. Fractional shares supported.', True),
+    ('TradeStation', 'tradestation', '📊', 'Advanced charting and order execution. Futures and options supported. Direct market access.', True),
+    ('Interactive Brokers', 'ibkr', '🌐', 'Global market access across 150+ markets. Lowest margin rates. Professional-grade tools.', True),
+    ('Schwab', 'schwab', '🏦', 'Full-service brokerage with thinkorswim platform. Options, futures, and crypto trading.', True),
+  ] %}
+
+  {% for name, id, icon, desc, available in brokers %}
+  <div class="card" style="border-radius:14px;">
+    <div class="card-body">
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;">
+        <div style="width:48px;height:48px;border-radius:10px;background:rgba(59,130,246,.1);display:flex;align-items:center;justify-content:center;font-size:1.4rem;">{{ icon }}</div>
+        <div>
+          <div style="font-weight:600;">{{ name }}</div>
+          {% if available %}
+          <span class="badge badge-green" style="font-size:.7rem;">Available</span>
+          {% else %}
+          <span class="badge" style="background:rgba(100,116,139,.1);color:var(--muted);font-size:.7rem;">Coming Soon</span>
+          {% endif %}
+        </div>
+      </div>
+      <p style="font-size:.85rem;color:var(--muted);line-height:1.6;margin-bottom:1.2rem;">{{ desc }}</p>
+      {% if available %}
+      <button class="btn btn-ghost" style="width:100%;" onclick="openConnectModal('{{ name }}', '{{ id }}')">
+        {% if connection and connection['broker'] == name %}✓ Connected{% else %}Connect{% endif %}
+      </button>
+      {% else %}
+      <button class="btn btn-ghost" style="width:100%;opacity:.5;cursor:not-allowed;" disabled>Coming Soon</button>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="card-title">Connection Requirements</span></div>
+  <div class="card-body">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1.5rem;">
+      <div>
+        <div style="font-weight:600;margin-bottom:.75rem;">🔑 API Credentials</div>
+        <ul style="color:var(--muted);font-size:.85rem;line-height:2;list-style:none;padding:0;">
+          <li>✓ API Key from your broker portal</li>
+          <li>✓ Secret Key (never stored in plaintext)</li>
+          <li>✓ Paper trading or live account</li>
+        </ul>
+      </div>
+      <div>
+        <div style="font-weight:600;margin-bottom:.75rem;">🛡️ Security</div>
+        <ul style="color:var(--muted);font-size:.85rem;line-height:2;list-style:none;padding:0;">
+          <li>✓ AES-256 encrypted key storage</li>
+          <li>✓ Read + trade permissions only</li>
+          <li>✓ No withdrawal access required</li>
+        </ul>
+      </div>
+      <div>
+        <div style="font-weight:600;margin-bottom:.75rem;">⚡ Capabilities</div>
+        <ul style="color:var(--muted);font-size:.85rem;line-height:2;list-style:none;padding:0;">
+          <li>✓ Real-time order execution</li>
+          <li>✓ Position and P&L sync</li>
+          <li>✓ Strategy auto-trading</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Connect Modal -->
+<div id="connect-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:none;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:2rem;width:100%;max-width:440px;margin:1rem;">
+    <div style="font-size:1.1rem;font-weight:700;margin-bottom:.4rem;" id="modal-broker-name">Connect Broker</div>
+    <div style="color:var(--muted);font-size:.85rem;margin-bottom:1.5rem;">Enter your API credentials from the broker portal.</div>
+
+    <div style="margin-bottom:1.2rem;">
+      <label style="display:block;font-size:.83rem;font-weight:600;color:var(--muted);margin-bottom:.45rem;">API Key</label>
+      <input type="text" id="api-key-input" placeholder="Enter your API key" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:.75rem 1rem;border-radius:8px;font-size:.9rem;outline:none;">
+    </div>
+    <div style="margin-bottom:1.5rem;">
+      <label style="display:block;font-size:.83rem;font-weight:600;color:var(--muted);margin-bottom:.45rem;">Secret Key</label>
+      <input type="password" id="api-secret-input" placeholder="Enter your secret key" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:.75rem 1rem;border-radius:8px;font-size:.9rem;outline:none;">
+    </div>
+
+    <div id="modal-err" style="display:none;color:var(--red);font-size:.85rem;margin-bottom:1rem;"></div>
+    <div style="display:flex;gap:.75rem;">
+      <button class="btn btn-ghost" style="flex:1;" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" style="flex:1;" id="connect-btn" onclick="doConnect()">Connect</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let selectedBroker = '';
+
+function openConnectModal(name, id) {
+  selectedBroker = name;
+  document.getElementById('modal-broker-name').textContent = 'Connect to ' + name;
+  document.getElementById('api-key-input').value = '';
+  document.getElementById('api-secret-input').value = '';
+  document.getElementById('modal-err').style.display = 'none';
+  document.getElementById('connect-modal').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('connect-modal').style.display = 'none';
+}
+
+async function doConnect() {
+  const api_key = document.getElementById('api-key-input').value.trim();
+  const secret = document.getElementById('api-secret-input').value.trim();
+  if (!api_key || !secret) {
+    document.getElementById('modal-err').textContent = 'Both fields are required.';
+    document.getElementById('modal-err').style.display = 'block';
+    return;
+  }
+  const btn = document.getElementById('connect-btn');
+  btn.disabled = true; btn.textContent = 'Connecting...';
+  try {
+    const res = await fetch('/api/broker/connect', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({broker: selectedBroker, api_key})
+    });
+    if (res.ok) {
+      closeModal();
+      showToast('Broker connected successfully!', 'success');
+      setTimeout(() => location.reload(), 1200);
+    } else {
+      const d = await res.json();
+      document.getElementById('modal-err').textContent = d.error;
+      document.getElementById('modal-err').style.display = 'block';
+    }
+  } catch {
+    document.getElementById('modal-err').textContent = 'Connection failed. Check credentials.';
+    document.getElementById('modal-err').style.display = 'block';
+  }
+  btn.disabled = false; btn.textContent = 'Connect';
+}
+
+async function disconnectBroker() {
+  if (!confirm('Disconnect your broker? Running strategies will be paused.')) return;
+  await fetch('/api/broker/disconnect', {method:'POST'});
+  showToast('Broker disconnected', 'success');
+  setTimeout(() => location.reload(), 1000);
+}
+</script>
+{% endblock %}

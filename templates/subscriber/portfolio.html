@@ -1,0 +1,198 @@
+{% extends "subscriber/base.html" %}
+{% set active = 'portfolio' %}
+{% block title %}Portfolio{% endblock %}
+{% block page_title %}Portfolio Dashboard{% endblock %}
+{% block content %}
+
+<div class="grid-4" style="margin-bottom:1.5rem;">
+  <div class="stat-card">
+    <div class="stat-label">Total Value</div>
+    <div class="stat-value" id="total-value">—</div>
+    <div class="stat-change text-green" id="value-change">Loading...</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Day P&L</div>
+    <div class="stat-value text-green" id="day-pnl">—</div>
+    <div class="stat-change text-muted" id="day-pct">—</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total P&L</div>
+    <div class="stat-value" id="total-pnl">—</div>
+    <div class="stat-change text-muted">Since inception</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Open Positions</div>
+    <div class="stat-value" id="open-pos">6</div>
+    <div class="stat-change text-muted">Across 3 strategies</div>
+  </div>
+</div>
+
+<div class="grid-2" style="margin-bottom:1.5rem;">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Portfolio Value (30 Days)</span>
+      <span class="badge badge-green">Live</span>
+    </div>
+    <div class="card-body" style="padding:1rem 1.5rem 1.5rem;">
+      <canvas id="pnl-chart" height="160"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Open Positions</span>
+    </div>
+    <div class="card-body" style="padding:0;">
+      <table>
+        <thead>
+          <tr><th>Symbol</th><th>Side</th><th>Qty</th><th>Avg Price</th><th>P&L</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>AAPL</strong></td>
+            <td><span class="badge badge-green">LONG</span></td>
+            <td>100</td>
+            <td>$182.50</td>
+            <td class="text-green">+$2,140</td>
+          </tr>
+          <tr>
+            <td><strong>NVDA</strong></td>
+            <td><span class="badge badge-green">LONG</span></td>
+            <td>30</td>
+            <td>$875.20</td>
+            <td class="text-green">+$5,820</td>
+          </tr>
+          <tr>
+            <td><strong>SPY</strong></td>
+            <td><span class="badge badge-green">LONG</span></td>
+            <td>200</td>
+            <td>$510.40</td>
+            <td class="text-green">+$1,320</td>
+          </tr>
+          <tr>
+            <td><strong>AMD</strong></td>
+            <td><span class="badge badge-green">LONG</span></td>
+            <td>120</td>
+            <td>$168.75</td>
+            <td class="text-red">-$480</td>
+          </tr>
+          <tr>
+            <td><strong>TSLA</strong></td>
+            <td><span class="badge badge-red">SHORT</span></td>
+            <td>50</td>
+            <td>$248.30</td>
+            <td class="text-green">+$890</td>
+          </tr>
+          <tr>
+            <td><strong>QQQ</strong></td>
+            <td><span class="badge badge-red">SHORT</span></td>
+            <td>75</td>
+            <td>$432.10</td>
+            <td class="text-red">-$225</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Recent Trade History</span>
+    <span class="badge badge-blue" id="trade-count">Loading...</span>
+  </div>
+  <div class="card-body" style="padding:0;overflow-x:auto;">
+    <table>
+      <thead>
+        <tr><th>Date</th><th>Symbol</th><th>Side</th><th>Qty</th><th>Price</th><th>Value</th><th>Strategy</th></tr>
+      </thead>
+      <tbody id="trade-tbody">
+        <tr><td colspan="7" class="text-muted" style="text-align:center;padding:2rem;">Loading trades...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+let chart;
+
+async function loadData() {
+  const [pnlRes, tradeRes] = await Promise.all([
+    fetch('/api/portfolio/pnl'),
+    fetch('/api/portfolio/trades')
+  ]);
+  const pnl = await pnlRes.json();
+  const trades = await tradeRes.json();
+
+  // Stats
+  const latest = pnl[pnl.length - 1].value;
+  const prev = pnl[pnl.length - 2].value;
+  const first = pnl[0].value;
+  const dayDiff = latest - prev;
+  const totalDiff = latest - first;
+
+  document.getElementById('total-value').textContent = '$' + latest.toLocaleString('en-US', {maximumFractionDigits:0});
+  document.getElementById('value-change').textContent = (dayDiff >= 0 ? '+' : '') + '$' + dayDiff.toLocaleString('en-US', {maximumFractionDigits:0}) + ' today';
+  document.getElementById('day-pnl').textContent = (dayDiff >= 0 ? '+' : '') + '$' + Math.abs(dayDiff).toLocaleString('en-US', {maximumFractionDigits:0});
+  document.getElementById('day-pct').textContent = ((dayDiff/prev)*100).toFixed(2) + '% vs yesterday';
+  document.getElementById('total-pnl').textContent = (totalDiff >= 0 ? '+' : '') + '$' + totalDiff.toLocaleString('en-US', {maximumFractionDigits:0});
+  document.getElementById('total-pnl').className = 'stat-value ' + (totalDiff >= 0 ? 'text-green' : 'text-red');
+
+  // Chart
+  const ctx = document.getElementById('pnl-chart').getContext('2d');
+  const labels = pnl.map(p => p.date.slice(5));
+  const values = pnl.map(p => p.value);
+  const grad = ctx.createLinearGradient(0, 0, 0, 180);
+  grad.addColorStop(0, 'rgba(59,130,246,.3)');
+  grad.addColorStop(1, 'rgba(59,130,246,0)');
+
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        borderColor: '#3b82f6',
+        backgroundColor: grad,
+        borderWidth: 2,
+        pointRadius: 0,
+        fill: true,
+        tension: .4
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,.05)' }, ticks: { color: '#64748b', maxTicksLimit: 8, font: {size:11} } },
+        y: {
+          grid: { color: 'rgba(255,255,255,.05)' },
+          ticks: { color: '#64748b', font: {size:11}, callback: v => '$' + (v/1000).toFixed(0) + 'k' }
+        }
+      }
+    }
+  });
+
+  // Trades
+  document.getElementById('trade-count').textContent = trades.length + ' trades';
+  const tbody = document.getElementById('trade-tbody');
+  if (!trades.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="text-muted" style="text-align:center;padding:2rem;">No trades yet</td></tr>';
+    return;
+  }
+  tbody.innerHTML = trades.map(t => `
+    <tr>
+      <td class="text-muted">${t.executed_at.slice(0,16)}</td>
+      <td><strong>${t.symbol}</strong></td>
+      <td><span class="badge ${t.side==='buy'?'badge-green':'badge-red'}">${t.side.toUpperCase()}</span></td>
+      <td>${t.qty}</td>
+      <td>$${t.price.toFixed(2)}</td>
+      <td>$${(t.qty * t.price).toLocaleString('en-US',{maximumFractionDigits:0})}</td>
+      <td><span class="badge badge-blue">${t.strategy || '—'}</span></td>
+    </tr>
+  `).join('');
+}
+
+loadData();
+</script>
+{% endblock %}

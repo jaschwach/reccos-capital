@@ -1,0 +1,144 @@
+{% extends "subscriber/base.html" %}
+{% set active = 'market' %}
+{% block title %}Market Intelligence{% endblock %}
+{% block page_title %}Market Intelligence{% endblock %}
+{% block content %}
+
+<div class="grid-4" style="margin-bottom:1.5rem;">
+  <div class="stat-card">
+    <div class="stat-label">S&P 500</div>
+    <div class="stat-value text-green">5,248</div>
+    <div class="stat-change text-green">▲ +0.84% today</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">NASDAQ</div>
+    <div class="stat-value text-green">16,412</div>
+    <div class="stat-change text-green">▲ +1.12% today</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">VIX</div>
+    <div class="stat-value text-yellow">18.4</div>
+    <div class="stat-change text-muted">▼ -0.8 (Low volatility)</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">10-Yr Yield</div>
+    <div class="stat-value">4.28%</div>
+    <div class="stat-change text-red">▲ +0.03% today</div>
+  </div>
+</div>
+
+<div class="grid-2" style="margin-bottom:1.5rem;">
+  <!-- News feed -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">🗞️ Market News</span>
+      <span class="badge badge-green">Live</span>
+    </div>
+    <div class="card-body" style="padding:0;">
+      {% set news = [
+        ('Fed Signals Potential Rate Cut in Q3 2026', 'Macro', 'green', '2h ago', 'Federal Reserve officials hinted at possible rate adjustments amid cooling inflation data, boosting equity markets.'),
+        ('NVIDIA Posts Record Revenue, Beats Estimates by 12%', 'Earnings', 'blue', '4h ago', 'AI chip demand drives NVDA to $26.2B quarterly revenue, sending shares up 6% after hours.'),
+        ('Tech Sector Outperforms Amid Rotation from Bonds', 'Sector', 'blue', '6h ago', 'Growth stocks rally as Treasury yields stabilize, with XLK gaining 2.1% on the session.'),
+        ('Oil Pulls Back on Inventory Build, Energy Stocks Slide', 'Commodity', 'red', '8h ago', 'WTI crude drops 1.8% after EIA reports larger-than-expected crude build, pressuring XLE.'),
+        ('China PMI Beats Expectations, Global Markets Rally', 'Global', 'green', '10h ago', 'Manufacturing activity surprises to the upside, lifting emerging market ETFs and industrial stocks.'),
+        ('Retail Sales Miss Forecast, Consumer Stocks Under Pressure', 'Economic', 'red', '12h ago', 'February retail sales decline 0.4%, missing the +0.3% consensus estimate.'),
+      ] %}
+      {% for title, tag, color, time, summary in news %}
+      <div style="padding:1rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,.02)'" onmouseout="this.style.background=''">
+        <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.4rem;">
+          <span class="badge badge-{{ color }}">{{ tag }}</span>
+          <span style="font-size:.75rem;color:var(--muted);">{{ time }}</span>
+        </div>
+        <div style="font-weight:600;font-size:.9rem;margin-bottom:.3rem;">{{ title }}</div>
+        <div style="font-size:.82rem;color:var(--muted);line-height:1.5;">{{ summary }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Right column -->
+  <div style="display:flex;flex-direction:column;gap:1.5rem;">
+
+    <!-- Sector heat map -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">🔥 Sector Performance</span></div>
+      <div class="card-body">
+        {% set sectors = [
+          ('Technology', '+2.1%', 'green'),
+          ('Consumer Disc.', '+1.4%', 'green'),
+          ('Industrials', '+0.8%', 'green'),
+          ('Healthcare', '+0.3%', 'green'),
+          ('Utilities', '-0.2%', 'yellow'),
+          ('Financials', '-0.5%', 'red'),
+          ('Real Estate', '-0.9%', 'red'),
+          ('Energy', '-1.8%', 'red'),
+        ] %}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
+          {% for sector, perf, color in sectors %}
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .75rem;border-radius:6px;background:rgba({% if color=='green' %}16,185,129{% elif color=='red' %}239,68,68{% else %}245,158,11{% endif %},.08);border:1px solid rgba({% if color=='green' %}16,185,129{% elif color=='red' %}239,68,68{% else %}245,158,11{% endif %},.15);">
+            <span style="font-size:.82rem;">{{ sector }}</span>
+            <span style="font-size:.82rem;font-weight:600;color:var(--{% if color=='green' %}green{% elif color=='red' %}red{% else %}yellow{% endif %});">{{ perf }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Economic calendar -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">📅 Economic Calendar</span></div>
+      <div class="card-body" style="padding:0;">
+        {% set events = [
+          ('Today', 'FOMC Minutes', 'High', 'yellow'),
+          ('Tomorrow', 'Initial Jobless Claims', 'Medium', 'blue'),
+          ('Mar 20', 'Core PCE Inflation', 'High', 'yellow'),
+          ('Mar 22', 'Durable Goods Orders', 'Medium', 'blue'),
+          ('Mar 25', 'Consumer Confidence', 'Low', 'green'),
+        ] %}
+        {% for date, event, impact, color in events %}
+        <div style="display:flex;align-items:center;gap:1rem;padding:.8rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.04);">
+          <span style="font-size:.78rem;color:var(--muted);width:60px;flex-shrink:0;">{{ date }}</span>
+          <span style="flex:1;font-size:.88rem;">{{ event }}</span>
+          <span class="badge badge-{{ color }}">{{ impact }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Top movers -->
+<div class="card">
+  <div class="card-header"><span class="card-title">⚡ Top Movers Today</span></div>
+  <div class="card-body" style="padding:0;overflow-x:auto;">
+    <table>
+      <thead>
+        <tr><th>Symbol</th><th>Company</th><th>Price</th><th>Change</th><th>% Change</th><th>Volume</th><th>Signal</th></tr>
+      </thead>
+      <tbody>
+        {% set movers = [
+          ('NVDA', 'NVIDIA Corp', '938.40', '+52.80', '+5.97%', '48.2M', 'Strong Buy', 'green'),
+          ('META', 'Meta Platforms', '521.60', '+18.30', '+3.64%', '22.1M', 'Buy', 'green'),
+          ('TSLA', 'Tesla Inc', '178.20', '+9.40', '+5.57%', '112.4M', 'Neutral', 'yellow'),
+          ('AAPL', 'Apple Inc', '204.10', '+3.80', '+1.90%', '35.6M', 'Buy', 'green'),
+          ('AMD', 'Adv Micro Devices', '162.30', '-6.20', '-3.68%', '41.8M', 'Hold', 'yellow'),
+          ('INTC', 'Intel Corp', '31.40', '-1.80', '-5.42%', '58.3M', 'Sell', 'red'),
+        ] %}
+        {% for sym, name, price, chg, pct, vol, signal, color in movers %}
+        <tr>
+          <td><strong>{{ sym }}</strong></td>
+          <td class="text-muted">{{ name }}</td>
+          <td>${{ price }}</td>
+          <td class="text-{{ color }}">{{ chg }}</td>
+          <td class="text-{{ color }}">{{ pct }}</td>
+          <td class="text-muted">{{ vol }}</td>
+          <td><span class="badge badge-{{ color }}">{{ signal }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
