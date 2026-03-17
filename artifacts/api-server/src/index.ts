@@ -1,38 +1,94 @@
 /**
  * Production entry point for Reccos Capital.
+ *
  * This Node.js process:
  *   1. Spawns the Python/Flask app as a child process on FLASK_PORT.
  *   2. Waits until Flask is ready.
- *   3. Starts a thin HTTP proxy on PORT that rewrites /api/ → /rpc/
- *      before forwarding every request to Flask.
+ *   3. Starts an HTTP server on PORT that:
+ *        - Serves static HTML pages from dist/public/ for all page routes.
+ *          Path resolution handles trailing slashes correctly:
+ *            /login   → dist/public/login/index.html
+ *            /login/  → dist/public/login/index.html
+ *        - Proxies /api/* to Flask, rewriting /api/ → /rpc/.
+ *        - Proxies /rpc/* to Flask as-is (direct API access).
+ *        - SPA fallback: unknown paths serve dist/public/index.html.
  *
- * Why the rewrite?  In production the Replit router sends /api/* to this
- * artifact (port 8080) and serves everything else as static files from
- * dist/public.  The static HTML pages use /api/ as their API prefix.
- * Flask internally uses /rpc/ routes.  The proxy bridges the two.
+ * This approach avoids relying on Replit's static-artifact SPA fallback,
+ * which does not handle /login (no trailing slash) → login/index.html.
  */
 
 import { spawn, type ChildProcess } from "child_process";
 import http from "http";
+import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// Support both CJS (__dirname global) and ESM (import.meta.url via fileURLToPath).
-// esbuild bundles to CJS so __dirname is available there.
-// tsx runs in ESM so we use import.meta.url.
 const _dirname: string =
   typeof __dirname !== "undefined"
     ? __dirname
     : path.dirname(fileURLToPath(import.meta.url));
 
-// Built output: artifacts/api-server/dist/index.cjs  → ../../.. = workspace root
-// Dev (tsx):    artifacts/api-server/src/index.ts    → ../../.. = workspace root
+// Built: artifacts/api-server/dist/index.cjs  → ../../.. = workspace root
+// Dev:   artifacts/api-server/src/index.ts    → ../../.. = workspace root
 const WORKSPACE_ROOT = path.resolve(_dirname, "../../..");
+const PUBLIC_DIR = path.join(WORKSPACE_ROOT, "artifacts/reccos-capital/dist/public");
 
 const PROXY_PORT = parseInt(process.env["PORT"] ?? "8080", 10);
-// Flask runs on a well-separated internal port to avoid clashing with
-// other dev services (e.g. mockup-sandbox on 8081).
 const FLASK_PORT = PROXY_PORT + 100; // e.g. 8080 → 8180
+
+// ---------------------------------------------------------------------------
+// Static file resolution
+// Handles /login, /login/, /subscriber/strategies, etc.
+// ---------------------------------------------------------------------------
+
+const MIME: Record<string, string> = {
+  ".html": "text/html; charset=utf-8",
+  ".css":  "text/css",
+  ".js":   "application/javascript",
+  ".json": "application/json",
+  ".png":  "image/png",
+  ".jpg":  "image/jpeg",
+  ".svg":  "image/svg+xml",
+  ".ico":  "image/x-icon",
+  ".woff": "font/woff",
+  ".woff2": "font/woff2",
+};
+
+function resolveStatic(urlPath: string): string | null {
+  // Strip query string and trailing slashes
+  const clean = urlPath.split("?")[0].replace(/\/+$/, "") || "/";
+
+  // 1. Exact file match (e.g. /style.css → dist/public/style.css)
+  if (clean !== "/") {
+    const exactFile = path.join(PUBLIC_DIR, clean);
+    try {
+      const stat = fs.statSync(exactFile);
+      if (stat.isFile()) return exactFile;
+    } catch { /* not found */ }
+  }
+
+  // 2. Directory index (e.g. /login → dist/public/login/index.html)
+  const indexFile = path.join(PUBLIC_DIR, clean === "/" ? "" : clean, "index.html");
+  try {
+    fs.statSync(indexFile);
+    return indexFile;
+  } catch { /* not found */ }
+
+  // 3. SPA fallback — serve root index.html
+  const fallback = path.join(PUBLIC_DIR, "index.html");
+  try {
+    fs.statSync(fallback);
+    return fallback;
+  } catch { return null; }
+}
+
+function serveFile(filePath: string, res: http.ServerResponse): void {
+  const ext = path.extname(filePath);
+  const mime = MIME[ext] ?? "application/octet-stream";
+  const data = fs.readFileSync(filePath);
+  res.writeHead(200, { "Content-Type": mime, "Content-Length": data.length });
+  res.end(data);
+}
 
 // ---------------------------------------------------------------------------
 // Flask subprocess
@@ -81,44 +137,80 @@ function waitForFlask(port: number, maxAttempts = 40): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// HTTP proxy with path rewrite:  /api/... → /rpc/...
+// Proxy a request to Flask
 // ---------------------------------------------------------------------------
 
-function startProxy(flaskPort: number, proxyPort: number): void {
+function proxyToFlask(
+  flaskPath: string,
+  clientReq: http.IncomingMessage,
+  clientRes: http.ServerResponse
+): void {
+  const options: http.RequestOptions = {
+    hostname: "127.0.0.1",
+    port: FLASK_PORT,
+    path: flaskPath,
+    method: clientReq.method,
+    headers: { ...clientReq.headers, host: `127.0.0.1:${FLASK_PORT}` },
+  };
+
+  const flaskReq = http.request(options, (flaskRes) => {
+    clientRes.writeHead(flaskRes.statusCode ?? 200, flaskRes.headers);
+    flaskRes.pipe(clientRes, { end: true });
+  });
+
+  flaskReq.on("error", (err) => {
+    console.error("[proxy] Error:", err.message);
+    if (!clientRes.headersSent) {
+      clientRes.writeHead(502, { "Content-Type": "text/plain" });
+    }
+    clientRes.end("Bad Gateway");
+  });
+
+  clientReq.pipe(flaskReq, { end: true });
+}
+
+// ---------------------------------------------------------------------------
+// HTTP server
+// ---------------------------------------------------------------------------
+
+function startServer(): void {
   const server = http.createServer((clientReq, clientRes) => {
     const rawPath = clientReq.url ?? "/";
 
-    // Rewrite /api/... to /rpc/... so Flask's existing /rpc/ routes match
-    const flaskPath = rawPath.startsWith("/api/")
-      ? "/rpc/" + rawPath.slice("/api/".length)
-      : rawPath;
+    // /api/* → proxy to Flask as /rpc/*
+    if (rawPath.startsWith("/api/") || rawPath === "/api") {
+      const flaskPath = "/rpc/" + rawPath.slice("/api/".length);
+      proxyToFlask(flaskPath, clientReq, clientRes);
+      return;
+    }
 
-    const options: http.RequestOptions = {
-      hostname: "127.0.0.1",
-      port: flaskPort,
-      path: flaskPath,
-      method: clientReq.method,
-      headers: { ...clientReq.headers, host: `127.0.0.1:${flaskPort}` },
-    };
+    // /rpc/* → proxy to Flask as-is (direct API access)
+    if (rawPath.startsWith("/rpc/") || rawPath === "/rpc") {
+      proxyToFlask(rawPath, clientReq, clientRes);
+      return;
+    }
 
-    const flaskReq = http.request(options, (flaskRes) => {
-      clientRes.writeHead(flaskRes.statusCode ?? 200, flaskRes.headers);
-      flaskRes.pipe(clientRes, { end: true });
-    });
-
-    flaskReq.on("error", (err) => {
-      console.error("[proxy] Error:", err.message);
-      if (!clientRes.headersSent) {
-        clientRes.writeHead(502, { "Content-Type": "text/plain" });
+    // All other paths → serve static files
+    const filePath = resolveStatic(rawPath);
+    if (filePath) {
+      try {
+        serveFile(filePath, clientRes);
+      } catch (err) {
+        console.error("[static] Error reading file:", err);
+        clientRes.writeHead(500, { "Content-Type": "text/plain" });
+        clientRes.end("Internal Server Error");
       }
-      clientRes.end("Bad Gateway");
-    });
+      return;
+    }
 
-    clientReq.pipe(flaskReq, { end: true });
+    clientRes.writeHead(404, { "Content-Type": "text/plain" });
+    clientRes.end("Not Found");
   });
 
-  server.listen(proxyPort, "0.0.0.0", () => {
-    console.log(`[proxy] Listening on :${proxyPort} → Flask :${flaskPort} (rewrites /api/ → /rpc/)`);
+  server.listen(PROXY_PORT, "0.0.0.0", () => {
+    console.log(`[server] Listening on :${PROXY_PORT}`);
+    console.log(`[server] Static files from: ${PUBLIC_DIR}`);
+    console.log(`[server] API proxy: /api/* → Flask :${FLASK_PORT} /rpc/*`);
   });
 }
 
@@ -131,7 +223,7 @@ async function main() {
   startFlask();
   console.log(`[proxy] Waiting for Flask on port ${FLASK_PORT}...`);
   await waitForFlask(FLASK_PORT);
-  startProxy(FLASK_PORT, PROXY_PORT);
+  startServer();
 }
 
 main().catch((err) => {
