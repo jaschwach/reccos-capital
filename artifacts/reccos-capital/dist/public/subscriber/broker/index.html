@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="api-base" content="/api">
+<title>Broker Connection — Reccos Capital</title>
+<style>
+  :root {
+    --bg: #0a0e1a; --surface: #0f1629; --surface2: #111827;
+    --border: #1e2d4a; --accent: #3b82f6; --accent2: #06b6d4;
+    --green: #10b981; --red: #ef4444; --yellow: #f59e0b;
+    --text: #e2e8f0; --muted: #64748b; --card: #111827;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; display: flex; min-height: 100vh; }
+
+  .sidebar { width: 240px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 0; flex-shrink: 0; }
+  .sidebar-logo { padding: 1.5rem; border-bottom: 1px solid var(--border); font-size: 1.1rem; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .sidebar-nav { padding: 1rem 0; flex: 1; }
+  .nav-item { display: flex; align-items: center; gap: .75rem; padding: .7rem 1.5rem; color: var(--muted); font-size: .9rem; font-weight: 500; cursor: pointer; transition: all .15s; text-decoration: none; border-left: 3px solid transparent; }
+  .nav-item:hover { color: var(--text); background: rgba(255,255,255,.04); }
+  .nav-item.active { color: var(--accent); background: rgba(59,130,246,.08); border-left-color: var(--accent); }
+  .nav-icon { font-size: 1.1rem; width: 20px; text-align: center; }
+  .sidebar-footer { padding: 1.5rem; border-top: 1px solid var(--border); }
+  .user-pill { display: flex; align-items: center; gap: .75rem; }
+  .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .85rem; color: #fff; flex-shrink: 0; }
+  .user-info { overflow: hidden; }
+  .user-email { font-size: .78rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-role { font-size: .7rem; color: var(--accent); font-weight: 600; text-transform: uppercase; }
+  .logout-btn { margin-top: .75rem; width: 100%; background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.2); color: #ef4444; padding: .5rem; border-radius: 7px; font-size: .82rem; font-weight: 600; cursor: pointer; transition: all .2s; }
+  .logout-btn:hover { background: rgba(239,68,68,.15); }
+
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; border-bottom: 1px solid var(--border); background: var(--surface); }
+  .topbar-title { font-size: 1.1rem; font-weight: 600; }
+  .topbar-right { display: flex; align-items: center; gap: 1rem; }
+  .market-pill { font-size: .8rem; padding: .3rem .8rem; border-radius: 999px; }
+  .pill-green { background: rgba(16,185,129,.1); color: var(--green); border: 1px solid rgba(16,185,129,.2); }
+  .pill-red { background: rgba(239,68,68,.1); color: var(--red); border: 1px solid rgba(239,68,68,.2); }
+
+  .content { flex: 1; overflow-y: auto; padding: 2rem; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
+  .card-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-size: .95rem; font-weight: 600; }
+  .card-body { padding: 1.5rem; }
+
+  .badge { padding: .2rem .6rem; border-radius: 999px; font-size: .72rem; font-weight: 600; }
+  .badge-green { background: rgba(16,185,129,.12); color: var(--green); }
+  .badge-red { background: rgba(239,68,68,.12); color: var(--red); }
+  .badge-blue { background: rgba(59,130,246,.12); color: var(--accent); }
+  .badge-yellow { background: rgba(245,158,11,.12); color: var(--yellow); }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: .75rem; color: var(--muted); font-weight: 600; padding: .6rem 1rem; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: .05em; }
+  td { padding: .75rem 1rem; font-size: .88rem; border-bottom: 1px solid rgba(255,255,255,.04); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,.02); }
+
+  .btn { padding: .55rem 1.2rem; border-radius: 8px; font-size: .85rem; font-weight: 600; cursor: pointer; transition: all .2s; border: none; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #2563eb; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.2); color: var(--red); }
+  .btn-danger:hover { background: rgba(239,68,68,.2); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+
+  .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; }
+  .stat-label { font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: .5rem; }
+  .stat-value { font-size: 1.8rem; font-weight: 700; }
+  .stat-change { font-size: .8rem; margin-top: .3rem; }
+  .text-green { color: var(--green); }
+  .text-red { color: var(--red); }
+  .text-muted { color: var(--muted); }
+
+  .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--surface); border: 1px solid var(--border); padding: 1rem 1.5rem; border-radius: 10px; font-size: .9rem; z-index: 9999; opacity: 0; transform: translateY(10px); transition: all .3s; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.success { border-color: rgba(16,185,129,.4); color: var(--green); }
+  .toast.error { border-color: rgba(239,68,68,.4); color: var(--red); }
+
+  @media(max-width: 900px) {
+    .grid-4 { grid-template-columns: 1fr 1fr; }
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+  }
+  @media(max-width: 640px) {
+    .sidebar { display: none; }
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .content { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-logo">⬡ Reccos Capital</div>
+  <nav class="sidebar-nav">
+    <a href="/subscriber/" class="nav-item ">
+      <span class="nav-icon">💼</span> Portfolio
+    </a>
+    <a href="/subscriber/strategies" class="nav-item ">
+      <span class="nav-icon">📈</span> Strategies
+    </a>
+    <a href="/subscriber/market" class="nav-item ">
+      <span class="nav-icon">🌐</span> Market Intel
+    </a>
+    <a href="/subscriber/broker" class="nav-item active">
+      <span class="nav-icon">🔗</span> Broker
+    </a>
+    <a href="/subscriber/settings" class="nav-item ">
+      <span class="nav-icon">⚙️</span> Settings
+    </a>
+    <a href="/admin" class="nav-item" id="admin-nav-link" style="display:none">
+      <span class="nav-icon">🛡️</span> Admin
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-pill">
+      <div class="user-avatar" id="sb-avatar">?</div>
+      <div class="user-info">
+        <div class="user-email" id="sb-email">Loading…</div>
+        <div class="user-role" id="sb-role"></div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="logout()">Sign Out</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">Broker Connection</div>
+    <div class="topbar-right">
+      <span class="market-pill pill-green">● S&P 500 +0.84%</span>
+      <span class="market-pill pill-green">● NASDAQ +1.12%</span>
+      <span class="market-pill pill-red">● VIX 18.4</span>
+    </div>
+  </div>
+  <div class="content">
+    
+
+
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.5rem;margin-bottom:2rem;">
+
+  
+
+  
+  <div class="card" style="border-radius:14px;">
+    <div class="card-body">
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;">
+        <div style="width:48px;height:48px;border-radius:10px;background:rgba(59,130,246,.1);display:flex;align-items:center;justify-content:center;font-size:1.4rem;">🦙</div>
+        <div>
+          <div style="font-weight:600;">Alpaca</div>
+          
+          <span class="badge badge-green" style="font-size:.7rem;">Available</span>
+          
+        </div>
+      </div>
+      <p style="font-size:.85rem;color:var(--muted);line-height:1.6;margin-bottom:1.2rem;">Commission-free API trading. Best for algo trading and automation. Fractional shares supported.</p>
+      
+      <button class="btn btn-ghost" style="width:100%;" onclick="openConnectModal('Alpaca', 'alpaca')">
+        Connect
+      </button>
+      
+    </div>
+  </div>
+  
+  <div class="card" style="border-radius:14px;">
+    <div class="card-body">
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;">
+        <div style="width:48px;height:48px;border-radius:10px;background:rgba(59,130,246,.1);display:flex;align-items:center;justify-content:center;font-size:1.4rem;">📊</div>
+        <div>
+          <div style="font-weight:600;">TradeStation</div>
+          
+          <span class="badge badge-green" style="font-size:.7rem;">Available</span>
+          
+        </div>
+      </div>
+      <p style="font-size:.85rem;color:var(--muted);line-height:1.6;margin-bottom:1.2rem;">Advanced charting and order execution. Futures and options supported. Direct market access.</p>
+      
+      <button class="btn btn-ghost" style="width:100%;" onclick="openConnectModal('TradeStation', 'tradestation')">
+        Connect
+      </button>
+      
+    </div>
+  </div>
+  
+  <div class="card" style="border-radius:14px;">
+    <div class="card-body">
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;">
+        <div style="width:48px;height:48px;border-radius:10px;background:rgba(59,130,246,.1);display:flex;align-items:center;justify-content:center;font-size:1.4rem;">🌐</div>
+        <div>
+          <div style="font-weight:600;">Interactive Brokers</div>
+          
+          <span class="badge badge-green" style="font-size:.7rem;">Available</span>
+          
+        </div>
+      </div>
+      <p style="font-size:.85rem;color:var(--muted);line-height:1.6;margin-bottom:1.2rem;">Global market access across 150+ markets. Lowest margin rates. Professional-grade tools.</p>
+      
+      <button class="btn btn-ghost" style="width:100%;" onclick="openConnectModal('Interactive Brokers', 'ibkr')">
+        Connect
+      </button>
+      
+    </div>
+  </div>
+  
+  <div class="card" style="border-radius:14px;">
+    <div class="card-body">
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;">
+        <div style="width:48px;height:48px;border-radius:10px;background:rgba(59,130,246,.1);display:flex;align-items:center;justify-content:center;font-size:1.4rem;">🏦</div>
+        <div>
+          <div style="font-weight:600;">Schwab</div>
+          
+          <span class="badge badge-green" style="font-size:.7rem;">Available</span>
+          
+        </div>
+      </div>
+      <p style="font-size:.85rem;color:var(--muted);line-height:1.6;margin-bottom:1.2rem;">Full-service brokerage with thinkorswim platform. Options, futures, and crypto trading.</p>
+      
+      <button class="btn btn-ghost" style="width:100%;" onclick="openConnectModal('Schwab', 'schwab')">
+        Connect
+      </button>
+      
+    </div>
+  </div>
+  
+
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="card-title">Connection Requirements</span></div>
+  <div class="card-body">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1.5rem;">
+      <div>
+        <div style="font-weight:600;margin-bottom:.75rem;">🔑 API Credentials</div>
+        <ul style="color:var(--muted);font-size:.85rem;line-height:2;list-style:none;padding:0;">
+          <li>✓ API Key from your broker portal</li>
+          <li>✓ Secret Key (never stored in plaintext)</li>
+          <li>✓ Paper trading or live account</li>
+        </ul>
+      </div>
+      <div>
+        <div style="font-weight:600;margin-bottom:.75rem;">🛡️ Security</div>
+        <ul style="color:var(--muted);font-size:.85rem;line-height:2;list-style:none;padding:0;">
+          <li>✓ AES-256 encrypted key storage</li>
+          <li>✓ Read + trade permissions only</li>
+          <li>✓ No withdrawal access required</li>
+        </ul>
+      </div>
+      <div>
+        <div style="font-weight:600;margin-bottom:.75rem;">⚡ Capabilities</div>
+        <ul style="color:var(--muted);font-size:.85rem;line-height:2;list-style:none;padding:0;">
+          <li>✓ Real-time order execution</li>
+          <li>✓ Position and P&L sync</li>
+          <li>✓ Strategy auto-trading</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Connect Modal -->
+<div id="connect-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:none;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:2rem;width:100%;max-width:440px;margin:1rem;">
+    <div style="font-size:1.1rem;font-weight:700;margin-bottom:.4rem;" id="modal-broker-name">Connect Broker</div>
+    <div style="color:var(--muted);font-size:.85rem;margin-bottom:1.5rem;">Enter your API credentials from the broker portal.</div>
+
+    <div style="margin-bottom:1.2rem;">
+      <label style="display:block;font-size:.83rem;font-weight:600;color:var(--muted);margin-bottom:.45rem;">API Key</label>
+      <input type="text" id="api-key-input" placeholder="Enter your API key" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:.75rem 1rem;border-radius:8px;font-size:.9rem;outline:none;">
+    </div>
+    <div style="margin-bottom:1.5rem;">
+      <label style="display:block;font-size:.83rem;font-weight:600;color:var(--muted);margin-bottom:.45rem;">Secret Key</label>
+      <input type="password" id="api-secret-input" placeholder="Enter your secret key" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:.75rem 1rem;border-radius:8px;font-size:.9rem;outline:none;">
+    </div>
+
+    <div id="modal-err" style="display:none;color:var(--red);font-size:.85rem;margin-bottom:1rem;"></div>
+    <div style="display:flex;gap:.75rem;">
+      <button class="btn btn-ghost" style="flex:1;" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" style="flex:1;" id="connect-btn" onclick="doConnect()">Connect</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let selectedBroker = '';
+
+function openConnectModal(name, id) {
+  selectedBroker = name;
+  document.getElementById('modal-broker-name').textContent = 'Connect to ' + name;
+  document.getElementById('api-key-input').value = '';
+  document.getElementById('api-secret-input').value = '';
+  document.getElementById('modal-err').style.display = 'none';
+  document.getElementById('connect-modal').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('connect-modal').style.display = 'none';
+}
+
+async function doConnect() {
+  const api_key = document.getElementById('api-key-input').value.trim();
+  const secret = document.getElementById('api-secret-input').value.trim();
+  if (!api_key || !secret) {
+    document.getElementById('modal-err').textContent = 'Both fields are required.';
+    document.getElementById('modal-err').style.display = 'block';
+    return;
+  }
+  const btn = document.getElementById('connect-btn');
+  btn.disabled = true; btn.textContent = 'Connecting...';
+  try {
+    const res = await fetch(API_BASE + '/broker/connect', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({broker: selectedBroker, api_key})
+    });
+    if (res.ok) {
+      closeModal();
+      showToast('Broker connected successfully!', 'success');
+      setTimeout(() => location.reload(), 1200);
+    } else {
+      const d = await res.json();
+      document.getElementById('modal-err').textContent = d.error;
+      document.getElementById('modal-err').style.display = 'block';
+    }
+  } catch {
+    document.getElementById('modal-err').textContent = 'Connection failed. Check credentials.';
+    document.getElementById('modal-err').style.display = 'block';
+  }
+  btn.disabled = false; btn.textContent = 'Connect';
+}
+
+async function disconnectBroker() {
+  if (!confirm('Disconnect your broker? Running strategies will be paused.')) return;
+  await fetch(API_BASE + '/broker/disconnect', {method:'POST'});
+  showToast('Broker disconnected', 'success');
+  setTimeout(() => location.reload(), 1000);
+}
+</script>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = document.querySelector('meta[name="api-base"]').content;
+
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type + ' show';
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+async function logout() {
+  await fetch(API_BASE + '/auth/logout', {method:'POST'});
+  window.location.href = '/login';
+}
+
+(async () => {
+  try {
+    const res = await fetch(API_BASE + '/auth/me');
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    const u = await res.json();
+    const av = document.getElementById('sb-avatar');
+    const em = document.getElementById('sb-email');
+    const ro = document.getElementById('sb-role');
+    const al = document.getElementById('admin-nav-link');
+    if (av) av.textContent = u.email[0].toUpperCase();
+    if (em) em.textContent = u.email;
+    if (ro) ro.textContent = u.role;
+    if (al && u.role === 'admin') al.style.display = '';
+  } catch (e) {
+    window.location.href = '/login';
+  }
+})();
+</script>
+
+</body>
+</html>

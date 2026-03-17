@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="api-base" content="/api">
+<title>Market Intelligence — Reccos Capital</title>
+<style>
+  :root {
+    --bg: #0a0e1a; --surface: #0f1629; --surface2: #111827;
+    --border: #1e2d4a; --accent: #3b82f6; --accent2: #06b6d4;
+    --green: #10b981; --red: #ef4444; --yellow: #f59e0b;
+    --text: #e2e8f0; --muted: #64748b; --card: #111827;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; display: flex; min-height: 100vh; }
+
+  .sidebar { width: 240px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 0; flex-shrink: 0; }
+  .sidebar-logo { padding: 1.5rem; border-bottom: 1px solid var(--border); font-size: 1.1rem; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .sidebar-nav { padding: 1rem 0; flex: 1; }
+  .nav-item { display: flex; align-items: center; gap: .75rem; padding: .7rem 1.5rem; color: var(--muted); font-size: .9rem; font-weight: 500; cursor: pointer; transition: all .15s; text-decoration: none; border-left: 3px solid transparent; }
+  .nav-item:hover { color: var(--text); background: rgba(255,255,255,.04); }
+  .nav-item.active { color: var(--accent); background: rgba(59,130,246,.08); border-left-color: var(--accent); }
+  .nav-icon { font-size: 1.1rem; width: 20px; text-align: center; }
+  .sidebar-footer { padding: 1.5rem; border-top: 1px solid var(--border); }
+  .user-pill { display: flex; align-items: center; gap: .75rem; }
+  .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .85rem; color: #fff; flex-shrink: 0; }
+  .user-info { overflow: hidden; }
+  .user-email { font-size: .78rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-role { font-size: .7rem; color: var(--accent); font-weight: 600; text-transform: uppercase; }
+  .logout-btn { margin-top: .75rem; width: 100%; background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.2); color: #ef4444; padding: .5rem; border-radius: 7px; font-size: .82rem; font-weight: 600; cursor: pointer; transition: all .2s; }
+  .logout-btn:hover { background: rgba(239,68,68,.15); }
+
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; border-bottom: 1px solid var(--border); background: var(--surface); }
+  .topbar-title { font-size: 1.1rem; font-weight: 600; }
+  .topbar-right { display: flex; align-items: center; gap: 1rem; }
+  .market-pill { font-size: .8rem; padding: .3rem .8rem; border-radius: 999px; }
+  .pill-green { background: rgba(16,185,129,.1); color: var(--green); border: 1px solid rgba(16,185,129,.2); }
+  .pill-red { background: rgba(239,68,68,.1); color: var(--red); border: 1px solid rgba(239,68,68,.2); }
+
+  .content { flex: 1; overflow-y: auto; padding: 2rem; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
+  .card-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-size: .95rem; font-weight: 600; }
+  .card-body { padding: 1.5rem; }
+
+  .badge { padding: .2rem .6rem; border-radius: 999px; font-size: .72rem; font-weight: 600; }
+  .badge-green { background: rgba(16,185,129,.12); color: var(--green); }
+  .badge-red { background: rgba(239,68,68,.12); color: var(--red); }
+  .badge-blue { background: rgba(59,130,246,.12); color: var(--accent); }
+  .badge-yellow { background: rgba(245,158,11,.12); color: var(--yellow); }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: .75rem; color: var(--muted); font-weight: 600; padding: .6rem 1rem; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: .05em; }
+  td { padding: .75rem 1rem; font-size: .88rem; border-bottom: 1px solid rgba(255,255,255,.04); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,.02); }
+
+  .btn { padding: .55rem 1.2rem; border-radius: 8px; font-size: .85rem; font-weight: 600; cursor: pointer; transition: all .2s; border: none; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #2563eb; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.2); color: var(--red); }
+  .btn-danger:hover { background: rgba(239,68,68,.2); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+
+  .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; }
+  .stat-label { font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: .5rem; }
+  .stat-value { font-size: 1.8rem; font-weight: 700; }
+  .stat-change { font-size: .8rem; margin-top: .3rem; }
+  .text-green { color: var(--green); }
+  .text-red { color: var(--red); }
+  .text-muted { color: var(--muted); }
+
+  .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--surface); border: 1px solid var(--border); padding: 1rem 1.5rem; border-radius: 10px; font-size: .9rem; z-index: 9999; opacity: 0; transform: translateY(10px); transition: all .3s; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.success { border-color: rgba(16,185,129,.4); color: var(--green); }
+  .toast.error { border-color: rgba(239,68,68,.4); color: var(--red); }
+
+  @media(max-width: 900px) {
+    .grid-4 { grid-template-columns: 1fr 1fr; }
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+  }
+  @media(max-width: 640px) {
+    .sidebar { display: none; }
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .content { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-logo">⬡ Reccos Capital</div>
+  <nav class="sidebar-nav">
+    <a href="/subscriber/" class="nav-item ">
+      <span class="nav-icon">💼</span> Portfolio
+    </a>
+    <a href="/subscriber/strategies" class="nav-item ">
+      <span class="nav-icon">📈</span> Strategies
+    </a>
+    <a href="/subscriber/market" class="nav-item active">
+      <span class="nav-icon">🌐</span> Market Intel
+    </a>
+    <a href="/subscriber/broker" class="nav-item ">
+      <span class="nav-icon">🔗</span> Broker
+    </a>
+    <a href="/subscriber/settings" class="nav-item ">
+      <span class="nav-icon">⚙️</span> Settings
+    </a>
+    <a href="/admin" class="nav-item" id="admin-nav-link" style="display:none">
+      <span class="nav-icon">🛡️</span> Admin
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-pill">
+      <div class="user-avatar" id="sb-avatar">?</div>
+      <div class="user-info">
+        <div class="user-email" id="sb-email">Loading…</div>
+        <div class="user-role" id="sb-role"></div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="logout()">Sign Out</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">Market Intelligence</div>
+    <div class="topbar-right">
+      <span class="market-pill pill-green">● S&P 500 +0.84%</span>
+      <span class="market-pill pill-green">● NASDAQ +1.12%</span>
+      <span class="market-pill pill-red">● VIX 18.4</span>
+    </div>
+  </div>
+  <div class="content">
+    
+
+<div class="grid-4" style="margin-bottom:1.5rem;">
+  <div class="stat-card">
+    <div class="stat-label">S&P 500</div>
+    <div class="stat-value text-green">5,248</div>
+    <div class="stat-change text-green">▲ +0.84% today</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">NASDAQ</div>
+    <div class="stat-value text-green">16,412</div>
+    <div class="stat-change text-green">▲ +1.12% today</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">VIX</div>
+    <div class="stat-value text-yellow">18.4</div>
+    <div class="stat-change text-muted">▼ -0.8 (Low volatility)</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">10-Yr Yield</div>
+    <div class="stat-value">4.28%</div>
+    <div class="stat-change text-red">▲ +0.03% today</div>
+  </div>
+</div>
+
+<div class="grid-2" style="margin-bottom:1.5rem;">
+  <!-- News feed -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">🗞️ Market News</span>
+      <span class="badge badge-green">Live</span>
+    </div>
+    <div class="card-body" style="padding:0;">
+      
+      
+      <div style="padding:1rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,.02)'" onmouseout="this.style.background=''">
+        <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.4rem;">
+          <span class="badge badge-green">Macro</span>
+          <span style="font-size:.75rem;color:var(--muted);">2h ago</span>
+        </div>
+        <div style="font-weight:600;font-size:.9rem;margin-bottom:.3rem;">Fed Signals Potential Rate Cut in Q3 2026</div>
+        <div style="font-size:.82rem;color:var(--muted);line-height:1.5;">Federal Reserve officials hinted at possible rate adjustments amid cooling inflation data, boosting equity markets.</div>
+      </div>
+      
+      <div style="padding:1rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,.02)'" onmouseout="this.style.background=''">
+        <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.4rem;">
+          <span class="badge badge-blue">Earnings</span>
+          <span style="font-size:.75rem;color:var(--muted);">4h ago</span>
+        </div>
+        <div style="font-weight:600;font-size:.9rem;margin-bottom:.3rem;">NVIDIA Posts Record Revenue, Beats Estimates by 12%</div>
+        <div style="font-size:.82rem;color:var(--muted);line-height:1.5;">AI chip demand drives NVDA to $26.2B quarterly revenue, sending shares up 6% after hours.</div>
+      </div>
+      
+      <div style="padding:1rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,.02)'" onmouseout="this.style.background=''">
+        <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.4rem;">
+          <span class="badge badge-blue">Sector</span>
+          <span style="font-size:.75rem;color:var(--muted);">6h ago</span>
+        </div>
+        <div style="font-weight:600;font-size:.9rem;margin-bottom:.3rem;">Tech Sector Outperforms Amid Rotation from Bonds</div>
+        <div style="font-size:.82rem;color:var(--muted);line-height:1.5;">Growth stocks rally as Treasury yields stabilize, with XLK gaining 2.1% on the session.</div>
+      </div>
+      
+      <div style="padding:1rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,.02)'" onmouseout="this.style.background=''">
+        <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.4rem;">
+          <span class="badge badge-red">Commodity</span>
+          <span style="font-size:.75rem;color:var(--muted);">8h ago</span>
+        </div>
+        <div style="font-weight:600;font-size:.9rem;margin-bottom:.3rem;">Oil Pulls Back on Inventory Build, Energy Stocks Slide</div>
+        <div style="font-size:.82rem;color:var(--muted);line-height:1.5;">WTI crude drops 1.8% after EIA reports larger-than-expected crude build, pressuring XLE.</div>
+      </div>
+      
+      <div style="padding:1rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,.02)'" onmouseout="this.style.background=''">
+        <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.4rem;">
+          <span class="badge badge-green">Global</span>
+          <span style="font-size:.75rem;color:var(--muted);">10h ago</span>
+        </div>
+        <div style="font-weight:600;font-size:.9rem;margin-bottom:.3rem;">China PMI Beats Expectations, Global Markets Rally</div>
+        <div style="font-size:.82rem;color:var(--muted);line-height:1.5;">Manufacturing activity surprises to the upside, lifting emerging market ETFs and industrial stocks.</div>
+      </div>
+      
+      <div style="padding:1rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,.02)'" onmouseout="this.style.background=''">
+        <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.4rem;">
+          <span class="badge badge-red">Economic</span>
+          <span style="font-size:.75rem;color:var(--muted);">12h ago</span>
+        </div>
+        <div style="font-weight:600;font-size:.9rem;margin-bottom:.3rem;">Retail Sales Miss Forecast, Consumer Stocks Under Pressure</div>
+        <div style="font-size:.82rem;color:var(--muted);line-height:1.5;">February retail sales decline 0.4%, missing the +0.3% consensus estimate.</div>
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- Right column -->
+  <div style="display:flex;flex-direction:column;gap:1.5rem;">
+
+    <!-- Sector heat map -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">🔥 Sector Performance</span></div>
+      <div class="card-body">
+        
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
+          
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .75rem;border-radius:6px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.15);">
+            <span style="font-size:.82rem;">Technology</span>
+            <span style="font-size:.82rem;font-weight:600;color:var(--green);">+2.1%</span>
+          </div>
+          
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .75rem;border-radius:6px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.15);">
+            <span style="font-size:.82rem;">Consumer Disc.</span>
+            <span style="font-size:.82rem;font-weight:600;color:var(--green);">+1.4%</span>
+          </div>
+          
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .75rem;border-radius:6px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.15);">
+            <span style="font-size:.82rem;">Industrials</span>
+            <span style="font-size:.82rem;font-weight:600;color:var(--green);">+0.8%</span>
+          </div>
+          
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .75rem;border-radius:6px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.15);">
+            <span style="font-size:.82rem;">Healthcare</span>
+            <span style="font-size:.82rem;font-weight:600;color:var(--green);">+0.3%</span>
+          </div>
+          
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .75rem;border-radius:6px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.15);">
+            <span style="font-size:.82rem;">Utilities</span>
+            <span style="font-size:.82rem;font-weight:600;color:var(--yellow);">-0.2%</span>
+          </div>
+          
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .75rem;border-radius:6px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.15);">
+            <span style="font-size:.82rem;">Financials</span>
+            <span style="font-size:.82rem;font-weight:600;color:var(--red);">-0.5%</span>
+          </div>
+          
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .75rem;border-radius:6px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.15);">
+            <span style="font-size:.82rem;">Real Estate</span>
+            <span style="font-size:.82rem;font-weight:600;color:var(--red);">-0.9%</span>
+          </div>
+          
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .75rem;border-radius:6px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.15);">
+            <span style="font-size:.82rem;">Energy</span>
+            <span style="font-size:.82rem;font-weight:600;color:var(--red);">-1.8%</span>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+
+    <!-- Economic calendar -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">📅 Economic Calendar</span></div>
+      <div class="card-body" style="padding:0;">
+        
+        
+        <div style="display:flex;align-items:center;gap:1rem;padding:.8rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.04);">
+          <span style="font-size:.78rem;color:var(--muted);width:60px;flex-shrink:0;">Today</span>
+          <span style="flex:1;font-size:.88rem;">FOMC Minutes</span>
+          <span class="badge badge-yellow">High</span>
+        </div>
+        
+        <div style="display:flex;align-items:center;gap:1rem;padding:.8rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.04);">
+          <span style="font-size:.78rem;color:var(--muted);width:60px;flex-shrink:0;">Tomorrow</span>
+          <span style="flex:1;font-size:.88rem;">Initial Jobless Claims</span>
+          <span class="badge badge-blue">Medium</span>
+        </div>
+        
+        <div style="display:flex;align-items:center;gap:1rem;padding:.8rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.04);">
+          <span style="font-size:.78rem;color:var(--muted);width:60px;flex-shrink:0;">Mar 20</span>
+          <span style="flex:1;font-size:.88rem;">Core PCE Inflation</span>
+          <span class="badge badge-yellow">High</span>
+        </div>
+        
+        <div style="display:flex;align-items:center;gap:1rem;padding:.8rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.04);">
+          <span style="font-size:.78rem;color:var(--muted);width:60px;flex-shrink:0;">Mar 22</span>
+          <span style="flex:1;font-size:.88rem;">Durable Goods Orders</span>
+          <span class="badge badge-blue">Medium</span>
+        </div>
+        
+        <div style="display:flex;align-items:center;gap:1rem;padding:.8rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.04);">
+          <span style="font-size:.78rem;color:var(--muted);width:60px;flex-shrink:0;">Mar 25</span>
+          <span style="flex:1;font-size:.88rem;">Consumer Confidence</span>
+          <span class="badge badge-green">Low</span>
+        </div>
+        
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Top movers -->
+<div class="card">
+  <div class="card-header"><span class="card-title">⚡ Top Movers Today</span></div>
+  <div class="card-body" style="padding:0;overflow-x:auto;">
+    <table>
+      <thead>
+        <tr><th>Symbol</th><th>Company</th><th>Price</th><th>Change</th><th>% Change</th><th>Volume</th><th>Signal</th></tr>
+      </thead>
+      <tbody>
+        
+        
+        <tr>
+          <td><strong>NVDA</strong></td>
+          <td class="text-muted">NVIDIA Corp</td>
+          <td>$938.40</td>
+          <td class="text-green">+52.80</td>
+          <td class="text-green">+5.97%</td>
+          <td class="text-muted">48.2M</td>
+          <td><span class="badge badge-green">Strong Buy</span></td>
+        </tr>
+        
+        <tr>
+          <td><strong>META</strong></td>
+          <td class="text-muted">Meta Platforms</td>
+          <td>$521.60</td>
+          <td class="text-green">+18.30</td>
+          <td class="text-green">+3.64%</td>
+          <td class="text-muted">22.1M</td>
+          <td><span class="badge badge-green">Buy</span></td>
+        </tr>
+        
+        <tr>
+          <td><strong>TSLA</strong></td>
+          <td class="text-muted">Tesla Inc</td>
+          <td>$178.20</td>
+          <td class="text-yellow">+9.40</td>
+          <td class="text-yellow">+5.57%</td>
+          <td class="text-muted">112.4M</td>
+          <td><span class="badge badge-yellow">Neutral</span></td>
+        </tr>
+        
+        <tr>
+          <td><strong>AAPL</strong></td>
+          <td class="text-muted">Apple Inc</td>
+          <td>$204.10</td>
+          <td class="text-green">+3.80</td>
+          <td class="text-green">+1.90%</td>
+          <td class="text-muted">35.6M</td>
+          <td><span class="badge badge-green">Buy</span></td>
+        </tr>
+        
+        <tr>
+          <td><strong>AMD</strong></td>
+          <td class="text-muted">Adv Micro Devices</td>
+          <td>$162.30</td>
+          <td class="text-yellow">-6.20</td>
+          <td class="text-yellow">-3.68%</td>
+          <td class="text-muted">41.8M</td>
+          <td><span class="badge badge-yellow">Hold</span></td>
+        </tr>
+        
+        <tr>
+          <td><strong>INTC</strong></td>
+          <td class="text-muted">Intel Corp</td>
+          <td>$31.40</td>
+          <td class="text-red">-1.80</td>
+          <td class="text-red">-5.42%</td>
+          <td class="text-muted">58.3M</td>
+          <td><span class="badge badge-red">Sell</span></td>
+        </tr>
+        
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = document.querySelector('meta[name="api-base"]').content;
+
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type + ' show';
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+async function logout() {
+  await fetch(API_BASE + '/auth/logout', {method:'POST'});
+  window.location.href = '/login';
+}
+
+(async () => {
+  try {
+    const res = await fetch(API_BASE + '/auth/me');
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    const u = await res.json();
+    const av = document.getElementById('sb-avatar');
+    const em = document.getElementById('sb-email');
+    const ro = document.getElementById('sb-role');
+    const al = document.getElementById('admin-nav-link');
+    if (av) av.textContent = u.email[0].toUpperCase();
+    if (em) em.textContent = u.email;
+    if (ro) ro.textContent = u.role;
+    if (al && u.role === 'admin') al.style.display = '';
+  } catch (e) {
+    window.location.href = '/login';
+  }
+})();
+</script>
+
+</body>
+</html>

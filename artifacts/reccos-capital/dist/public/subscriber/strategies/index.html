@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="api-base" content="/api">
+<title>Strategies — Reccos Capital</title>
+<style>
+  :root {
+    --bg: #0a0e1a; --surface: #0f1629; --surface2: #111827;
+    --border: #1e2d4a; --accent: #3b82f6; --accent2: #06b6d4;
+    --green: #10b981; --red: #ef4444; --yellow: #f59e0b;
+    --text: #e2e8f0; --muted: #64748b; --card: #111827;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; display: flex; min-height: 100vh; }
+
+  .sidebar { width: 240px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 0; flex-shrink: 0; }
+  .sidebar-logo { padding: 1.5rem; border-bottom: 1px solid var(--border); font-size: 1.1rem; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .sidebar-nav { padding: 1rem 0; flex: 1; }
+  .nav-item { display: flex; align-items: center; gap: .75rem; padding: .7rem 1.5rem; color: var(--muted); font-size: .9rem; font-weight: 500; cursor: pointer; transition: all .15s; text-decoration: none; border-left: 3px solid transparent; }
+  .nav-item:hover { color: var(--text); background: rgba(255,255,255,.04); }
+  .nav-item.active { color: var(--accent); background: rgba(59,130,246,.08); border-left-color: var(--accent); }
+  .nav-icon { font-size: 1.1rem; width: 20px; text-align: center; }
+  .sidebar-footer { padding: 1.5rem; border-top: 1px solid var(--border); }
+  .user-pill { display: flex; align-items: center; gap: .75rem; }
+  .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .85rem; color: #fff; flex-shrink: 0; }
+  .user-info { overflow: hidden; }
+  .user-email { font-size: .78rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-role { font-size: .7rem; color: var(--accent); font-weight: 600; text-transform: uppercase; }
+  .logout-btn { margin-top: .75rem; width: 100%; background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.2); color: #ef4444; padding: .5rem; border-radius: 7px; font-size: .82rem; font-weight: 600; cursor: pointer; transition: all .2s; }
+  .logout-btn:hover { background: rgba(239,68,68,.15); }
+
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; border-bottom: 1px solid var(--border); background: var(--surface); }
+  .topbar-title { font-size: 1.1rem; font-weight: 600; }
+  .topbar-right { display: flex; align-items: center; gap: 1rem; }
+  .market-pill { font-size: .8rem; padding: .3rem .8rem; border-radius: 999px; }
+  .pill-green { background: rgba(16,185,129,.1); color: var(--green); border: 1px solid rgba(16,185,129,.2); }
+  .pill-red { background: rgba(239,68,68,.1); color: var(--red); border: 1px solid rgba(239,68,68,.2); }
+
+  .content { flex: 1; overflow-y: auto; padding: 2rem; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
+  .card-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-size: .95rem; font-weight: 600; }
+  .card-body { padding: 1.5rem; }
+
+  .badge { padding: .2rem .6rem; border-radius: 999px; font-size: .72rem; font-weight: 600; }
+  .badge-green { background: rgba(16,185,129,.12); color: var(--green); }
+  .badge-red { background: rgba(239,68,68,.12); color: var(--red); }
+  .badge-blue { background: rgba(59,130,246,.12); color: var(--accent); }
+  .badge-yellow { background: rgba(245,158,11,.12); color: var(--yellow); }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: .75rem; color: var(--muted); font-weight: 600; padding: .6rem 1rem; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: .05em; }
+  td { padding: .75rem 1rem; font-size: .88rem; border-bottom: 1px solid rgba(255,255,255,.04); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,.02); }
+
+  .btn { padding: .55rem 1.2rem; border-radius: 8px; font-size: .85rem; font-weight: 600; cursor: pointer; transition: all .2s; border: none; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #2563eb; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.2); color: var(--red); }
+  .btn-danger:hover { background: rgba(239,68,68,.2); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+
+  .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; }
+  .stat-label { font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: .5rem; }
+  .stat-value { font-size: 1.8rem; font-weight: 700; }
+  .stat-change { font-size: .8rem; margin-top: .3rem; }
+  .text-green { color: var(--green); }
+  .text-red { color: var(--red); }
+  .text-muted { color: var(--muted); }
+
+  .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--surface); border: 1px solid var(--border); padding: 1rem 1.5rem; border-radius: 10px; font-size: .9rem; z-index: 9999; opacity: 0; transform: translateY(10px); transition: all .3s; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.success { border-color: rgba(16,185,129,.4); color: var(--green); }
+  .toast.error { border-color: rgba(239,68,68,.4); color: var(--red); }
+
+  @media(max-width: 900px) {
+    .grid-4 { grid-template-columns: 1fr 1fr; }
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+  }
+  @media(max-width: 640px) {
+    .sidebar { display: none; }
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .content { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-logo">⬡ Reccos Capital</div>
+  <nav class="sidebar-nav">
+    <a href="/subscriber/" class="nav-item ">
+      <span class="nav-icon">💼</span> Portfolio
+    </a>
+    <a href="/subscriber/strategies" class="nav-item active">
+      <span class="nav-icon">📈</span> Strategies
+    </a>
+    <a href="/subscriber/market" class="nav-item ">
+      <span class="nav-icon">🌐</span> Market Intel
+    </a>
+    <a href="/subscriber/broker" class="nav-item ">
+      <span class="nav-icon">🔗</span> Broker
+    </a>
+    <a href="/subscriber/settings" class="nav-item ">
+      <span class="nav-icon">⚙️</span> Settings
+    </a>
+    <a href="/admin" class="nav-item" id="admin-nav-link" style="display:none">
+      <span class="nav-icon">🛡️</span> Admin
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-pill">
+      <div class="user-avatar" id="sb-avatar">?</div>
+      <div class="user-info">
+        <div class="user-email" id="sb-email">Loading…</div>
+        <div class="user-role" id="sb-role"></div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="logout()">Sign Out</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">Strategy Marketplace</div>
+    <div class="topbar-right">
+      <span class="market-pill pill-green">● S&P 500 +0.84%</span>
+      <span class="market-pill pill-green">● NASDAQ +1.12%</span>
+      <span class="market-pill pill-red">● VIX 18.4</span>
+    </div>
+  </div>
+  <div class="content">
+    
+
+<p style="color:var(--muted);margin-bottom:1.5rem;font-size:.9rem;">
+  Deploy AI-powered trading strategies to your connected broker. All strategies are continuously monitored and risk-managed.
+</p>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1.5rem;">
+
+  <!-- Dip Recovery -->
+  <div class="card" style="border-radius:14px;overflow:hidden;">
+    <div style="height:4px;background:linear-gradient(90deg,#10b981,#06b6d4);"></div>
+    <div class="card-body">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.2rem;">
+        <div>
+          <div style="font-size:1.1rem;font-weight:700;">Dip Recovery</div>
+          <div style="font-size:.8rem;color:var(--muted);margin-top:.2rem;">Mean reversion on oversold equities</div>
+        </div>
+        <span class="badge badge-green">● Live</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem;">
+        <div>
+          <div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">12-MO RETURN</div>
+          <div style="font-size:1.8rem;font-weight:700;color:var(--green);">+31.2%</div>
+        </div>
+        <div>
+          <div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">SHARPE RATIO</div>
+          <div style="font-size:1.8rem;font-weight:700;">0.81</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:1rem;padding:1rem;background:rgba(255,255,255,.03);border-radius:8px;margin-bottom:1.2rem;">
+        <div style="flex:1;text-align:center;">
+          <div style="font-size:.72rem;color:var(--muted);">WIN RATE</div>
+          <div style="font-weight:600;">67%</div>
+        </div>
+        <div style="flex:1;text-align:center;border-left:1px solid var(--border);">
+          <div style="font-size:.72rem;color:var(--muted);">MAX DD</div>
+          <div style="font-weight:600;color:var(--red);">-8.4%</div>
+        </div>
+        <div style="flex:1;text-align:center;border-left:1px solid var(--border);">
+          <div style="font-size:.72rem;color:var(--muted);">AVG HOLD</div>
+          <div style="font-weight:600;">3.2d</div>
+        </div>
+      </div>
+
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1.2rem;line-height:1.6;">
+        Identifies large-cap equities experiencing short-term overselling relative to sector peers. Enters on confirmed support, exits on RSI normalization. Suitable for moderate risk tolerance.
+      </p>
+
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem;">
+        <span class="badge badge-blue">Large Cap</span>
+        <span class="badge badge-blue">Mean Reversion</span>
+        <span class="badge badge-blue">Low Leverage</span>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%;" onclick="deployStrategy('Dip Recovery', this)">Deploy Strategy</button>
+    </div>
+  </div>
+
+  <!-- Rally Fade -->
+  <div class="card" style="border-radius:14px;overflow:hidden;">
+    <div style="height:4px;background:linear-gradient(90deg,#f59e0b,#ef4444);"></div>
+    <div class="card-body">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.2rem;">
+        <div>
+          <div style="font-size:1.1rem;font-weight:700;">Rally Fade</div>
+          <div style="font-size:.8rem;color:var(--muted);margin-top:.2rem;">Short overextended momentum</div>
+        </div>
+        <span class="badge badge-green">● Live</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem;">
+        <div>
+          <div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">12-MO RETURN</div>
+          <div style="font-size:1.8rem;font-weight:700;color:var(--green);">+22.7%</div>
+        </div>
+        <div>
+          <div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">SHARPE RATIO</div>
+          <div style="font-size:1.8rem;font-weight:700;">0.64</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:1rem;padding:1rem;background:rgba(255,255,255,.03);border-radius:8px;margin-bottom:1.2rem;">
+        <div style="flex:1;text-align:center;">
+          <div style="font-size:.72rem;color:var(--muted);">WIN RATE</div>
+          <div style="font-weight:600;">61%</div>
+        </div>
+        <div style="flex:1;text-align:center;border-left:1px solid var(--border);">
+          <div style="font-size:.72rem;color:var(--muted);">MAX DD</div>
+          <div style="font-weight:600;color:var(--red);">-11.2%</div>
+        </div>
+        <div style="flex:1;text-align:center;border-left:1px solid var(--border);">
+          <div style="font-size:.72rem;color:var(--muted);">AVG HOLD</div>
+          <div style="font-weight:600;">1.8d</div>
+        </div>
+      </div>
+
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1.2rem;line-height:1.6;">
+        Shorts equities showing parabolic price extension with exhausted buying volume. Uses ATR-based stops and scale-in short entries at resistance. Best in choppy or bearish markets.
+      </p>
+
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem;">
+        <span class="badge badge-yellow">Short Selling</span>
+        <span class="badge badge-yellow">Momentum</span>
+        <span class="badge badge-yellow">Medium Risk</span>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%;" onclick="deployStrategy('Rally Fade', this)">Deploy Strategy</button>
+    </div>
+  </div>
+
+  <!-- High Beta Momentum -->
+  <div class="card" style="border-radius:14px;overflow:hidden;">
+    <div style="height:4px;background:linear-gradient(90deg,#8b5cf6,#3b82f6);"></div>
+    <div class="card-body">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.2rem;">
+        <div>
+          <div style="font-size:1.1rem;font-weight:700;">High Beta Momentum</div>
+          <div style="font-size:.8rem;color:var(--muted);margin-top:.2rem;">Ride institutional breakouts</div>
+        </div>
+        <span class="badge badge-blue">● Beta</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem;">
+        <div>
+          <div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">12-MO RETURN</div>
+          <div style="font-size:1.8rem;font-weight:700;color:var(--green);">+41.9%</div>
+        </div>
+        <div>
+          <div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">SHARPE RATIO</div>
+          <div style="font-size:1.8rem;font-weight:700;">0.72</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:1rem;padding:1rem;background:rgba(255,255,255,.03);border-radius:8px;margin-bottom:1.2rem;">
+        <div style="flex:1;text-align:center;">
+          <div style="font-size:.72rem;color:var(--muted);">WIN RATE</div>
+          <div style="font-weight:600;">54%</div>
+        </div>
+        <div style="flex:1;text-align:center;border-left:1px solid var(--border);">
+          <div style="font-size:.72rem;color:var(--muted);">MAX DD</div>
+          <div style="font-weight:600;color:var(--red);">-19.1%</div>
+        </div>
+        <div style="flex:1;text-align:center;border-left:1px solid var(--border);">
+          <div style="font-size:.72rem;color:var(--muted);">AVG HOLD</div>
+          <div style="font-weight:600;">5.4d</div>
+        </div>
+      </div>
+
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1.2rem;line-height:1.6;">
+        Targets high-beta growth stocks breaking out on above-average institutional volume. Pyramids into winners, cuts losers quickly. Designed for aggressive growth accounts. Higher risk profile.
+      </p>
+
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem;">
+        <span class="badge" style="background:rgba(139,92,246,.12);color:#8b5cf6;">Growth</span>
+        <span class="badge" style="background:rgba(139,92,246,.12);color:#8b5cf6;">Breakout</span>
+        <span class="badge" style="background:rgba(139,92,246,.12);color:#8b5cf6;">High Risk</span>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%;" onclick="deployStrategy('High Beta Momentum', this)">Deploy Strategy</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Risk disclosure -->
+<div style="margin-top:2rem;padding:1.2rem 1.5rem;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:10px;font-size:.82rem;color:var(--muted);">
+  ⚠️ <strong style="color:var(--yellow);">Risk Disclosure:</strong> All trading strategies involve risk of loss. Past performance is not indicative of future results. You may lose some or all of your invested capital. Please ensure you have a broker connected before deploying.
+</div>
+
+<script>
+function deployStrategy(name, btn) {
+  btn.disabled = true;
+  btn.textContent = 'Deploying...';
+  setTimeout(() => {
+    showToast('Strategy "' + name + '" deployed successfully!', 'success');
+    btn.textContent = '✓ Deployed';
+    btn.style.background = 'rgba(16,185,129,.15)';
+    btn.style.color = 'var(--green)';
+    btn.style.border = '1px solid rgba(16,185,129,.3)';
+  }, 1200);
+}
+</script>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = document.querySelector('meta[name="api-base"]').content;
+
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type + ' show';
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+async function logout() {
+  await fetch(API_BASE + '/auth/logout', {method:'POST'});
+  window.location.href = '/login';
+}
+
+(async () => {
+  try {
+    const res = await fetch(API_BASE + '/auth/me');
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    const u = await res.json();
+    const av = document.getElementById('sb-avatar');
+    const em = document.getElementById('sb-email');
+    const ro = document.getElementById('sb-role');
+    const al = document.getElementById('admin-nav-link');
+    if (av) av.textContent = u.email[0].toUpperCase();
+    if (em) em.textContent = u.email;
+    if (ro) ro.textContent = u.role;
+    if (al && u.role === 'admin') al.style.display = '';
+  } catch (e) {
+    window.location.href = '/login';
+  }
+})();
+</script>
+
+</body>
+</html>

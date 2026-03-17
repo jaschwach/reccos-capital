@@ -4,6 +4,13 @@
 dist
 tmp
 out-tsc
+
+# Production build outputs — keep committed so deployments work without a build step
+!artifacts/api-server/dist/
+!artifacts/api-server/dist/index.cjs
+!artifacts/reccos-capital/dist/
+!artifacts/reccos-capital/dist/public/
+!artifacts/reccos-capital/dist/public/**
 *.tsbuildinfo
 .expo
 .expo-shared
