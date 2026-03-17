@@ -8,22 +8,15 @@
 <script>
 /* SPA router — runs before any rendering.
    In production, ALL paths are rewritten to index.html by the static artifact.
-   This script detects non-root paths and swaps in the correct page via /api/render. */
+   This script detects non-root paths and navigates directly to /api/render,
+   which serves the correct page HTML from the api-server.
+   Using location.replace() (not document.write) avoids JS context conflicts —
+   document.write() shares the window scope with the landing page, causing
+   "Identifier 'API_BASE' has already been declared" errors. */
 (function(){
   var path = window.location.pathname;
   if (path === '/' || path === '') return; // Landing page — render normally
-  // Hide to prevent flash of wrong content while fetching
-  document.documentElement.style.visibility = 'hidden';
-  fetch('/api/render?path=' + encodeURIComponent(path))
-    .then(function(r){ return r.text(); })
-    .then(function(html){
-      document.open();
-      document.write(html);
-      document.close();
-    })
-    .catch(function(){
-      document.documentElement.style.visibility = ''; // Show landing page on error
-    });
+  location.replace('/api/render?path=' + encodeURIComponent(path));
 })();
 </script>
 <style>
