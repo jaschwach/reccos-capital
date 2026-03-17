@@ -142,6 +142,25 @@
   <div class="content">
     
 
+<style>
+.strat-tab-bar { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:1.5rem; overflow-x:auto; }
+.strat-tab { padding:.6rem 1.1rem; font-size:.82rem; font-weight:600; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; background:none; border-top:none; border-left:none; border-right:none; }
+.strat-tab.active { color:#ff6b6b; border-bottom-color:#ff6b6b; }
+.strat-tab-panel { display:none; }
+.strat-tab-panel.active { display:block; }
+.mini-stat { text-align:center; flex:1; }
+.mini-stat .lbl { font-size:.68rem; color:var(--muted); margin-bottom:.2rem; }
+.mini-stat .val { font-weight:700; font-size:.95rem; }
+.detail-modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:2000; align-items:center; justify-content:center; }
+.detail-modal-backdrop.open { display:flex; }
+.detail-modal { background:var(--surface); border:1px solid var(--border); border-radius:16px; width:100%; max-width:680px; max-height:90vh; overflow-y:auto; margin:1rem; }
+.detail-modal-header { padding:1.5rem 1.5rem .75rem; display:flex; justify-content:space-between; align-items:flex-start; }
+.monthly-bar { display:flex; align-items:flex-end; gap:3px; height:60px; }
+.m-bar { flex:1; border-radius:3px 3px 0 0; min-height:3px; }
+.trade-row { display:flex; justify-content:space-between; padding:.55rem 0; border-bottom:1px solid rgba(255,255,255,.04); font-size:.83rem; }
+.badge-coral { background:rgba(255,107,107,.12); color:#ff6b6b; }
+</style>
+
 <p style="color:var(--muted);margin-bottom:1.5rem;font-size:.9rem;">
   Deploy AI-powered trading strategies to your connected broker. All strategies are continuously monitored and risk-managed.
 </p>
@@ -159,44 +178,24 @@
         </div>
         <span class="badge badge-green">● Live</span>
       </div>
-
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem;">
-        <div>
-          <div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">12-MO RETURN</div>
-          <div style="font-size:1.8rem;font-weight:700;color:var(--green);">+31.2%</div>
-        </div>
-        <div>
-          <div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">SHARPE RATIO</div>
-          <div style="font-size:1.8rem;font-weight:700;">0.81</div>
-        </div>
+        <div><div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">12-MO RETURN</div><div style="font-size:1.8rem;font-weight:700;color:var(--green);">+31.2%</div></div>
+        <div><div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">SHARPE RATIO</div><div style="font-size:1.8rem;font-weight:700;">0.81</div></div>
       </div>
-
       <div style="display:flex;gap:1rem;padding:1rem;background:rgba(255,255,255,.03);border-radius:8px;margin-bottom:1.2rem;">
-        <div style="flex:1;text-align:center;">
-          <div style="font-size:.72rem;color:var(--muted);">WIN RATE</div>
-          <div style="font-weight:600;">67%</div>
-        </div>
-        <div style="flex:1;text-align:center;border-left:1px solid var(--border);">
-          <div style="font-size:.72rem;color:var(--muted);">MAX DD</div>
-          <div style="font-weight:600;color:var(--red);">-8.4%</div>
-        </div>
-        <div style="flex:1;text-align:center;border-left:1px solid var(--border);">
-          <div style="font-size:.72rem;color:var(--muted);">AVG HOLD</div>
-          <div style="font-weight:600;">3.2d</div>
-        </div>
+        <div class="mini-stat"><div class="lbl">WIN RATE</div><div class="val">67%</div></div>
+        <div class="mini-stat" style="border-left:1px solid var(--border);"><div class="lbl">MAX DD</div><div class="val" style="color:var(--red);">-8.4%</div></div>
+        <div class="mini-stat" style="border-left:1px solid var(--border);"><div class="lbl">AVG HOLD</div><div class="val">3.2d</div></div>
       </div>
-
-      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1.2rem;line-height:1.6;">
-        Identifies large-cap equities experiencing short-term overselling relative to sector peers. Enters on confirmed support, exits on RSI normalization. Suitable for moderate risk tolerance.
-      </p>
-
       <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem;">
-        <span class="badge badge-blue">Large Cap</span>
-        <span class="badge badge-blue">Mean Reversion</span>
-        <span class="badge badge-blue">Low Leverage</span>
+        <span class="badge badge-coral">Large Cap</span>
+        <span class="badge badge-coral">Mean Reversion</span>
+        <span class="badge badge-coral">Low Leverage</span>
       </div>
-
-      <button class="btn btn-primary" style="width:100%;" onclick="deployStrategy('Dip Recovery', this)">Deploy Strategy</button>
+      <div style="display:flex;gap:.5rem;">
+        <button class="btn btn-ghost" style="flex:1;" onclick="openDetail('dip-recovery')">View Details</button>
+        <button class="btn btn-primary" style="flex:1;" onclick="deployStrategy('Dip Recovery', this)">Deploy</button>
+      </div>
     </div>
   </div>
 
@@ -211,44 +210,24 @@
         </div>
         <span class="badge badge-green">● Live</span>
       </div>
-
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem;">
-        <div>
-          <div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">12-MO RETURN</div>
-          <div style="font-size:1.8rem;font-weight:700;color:var(--green);">+22.7%</div>
-        </div>
-        <div>
-          <div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">SHARPE RATIO</div>
-          <div style="font-size:1.8rem;font-weight:700;">0.64</div>
-        </div>
+        <div><div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">12-MO RETURN</div><div style="font-size:1.8rem;font-weight:700;color:var(--green);">+22.7%</div></div>
+        <div><div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">SHARPE RATIO</div><div style="font-size:1.8rem;font-weight:700;">0.64</div></div>
       </div>
-
       <div style="display:flex;gap:1rem;padding:1rem;background:rgba(255,255,255,.03);border-radius:8px;margin-bottom:1.2rem;">
-        <div style="flex:1;text-align:center;">
-          <div style="font-size:.72rem;color:var(--muted);">WIN RATE</div>
-          <div style="font-weight:600;">61%</div>
-        </div>
-        <div style="flex:1;text-align:center;border-left:1px solid var(--border);">
-          <div style="font-size:.72rem;color:var(--muted);">MAX DD</div>
-          <div style="font-weight:600;color:var(--red);">-11.2%</div>
-        </div>
-        <div style="flex:1;text-align:center;border-left:1px solid var(--border);">
-          <div style="font-size:.72rem;color:var(--muted);">AVG HOLD</div>
-          <div style="font-weight:600;">1.8d</div>
-        </div>
+        <div class="mini-stat"><div class="lbl">WIN RATE</div><div class="val">61%</div></div>
+        <div class="mini-stat" style="border-left:1px solid var(--border);"><div class="lbl">MAX DD</div><div class="val" style="color:var(--red);">-11.2%</div></div>
+        <div class="mini-stat" style="border-left:1px solid var(--border);"><div class="lbl">AVG HOLD</div><div class="val">1.8d</div></div>
       </div>
-
-      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1.2rem;line-height:1.6;">
-        Shorts equities showing parabolic price extension with exhausted buying volume. Uses ATR-based stops and scale-in short entries at resistance. Best in choppy or bearish markets.
-      </p>
-
       <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem;">
-        <span class="badge badge-yellow">Short Selling</span>
-        <span class="badge badge-yellow">Momentum</span>
-        <span class="badge badge-yellow">Medium Risk</span>
+        <span class="badge" style="background:rgba(245,158,11,.12);color:#f59e0b;">Short Selling</span>
+        <span class="badge" style="background:rgba(245,158,11,.12);color:#f59e0b;">Momentum</span>
+        <span class="badge" style="background:rgba(245,158,11,.12);color:#f59e0b;">Medium Risk</span>
       </div>
-
-      <button class="btn btn-primary" style="width:100%;" onclick="deployStrategy('Rally Fade', this)">Deploy Strategy</button>
+      <div style="display:flex;gap:.5rem;">
+        <button class="btn btn-ghost" style="flex:1;" onclick="openDetail('rally-fade')">View Details</button>
+        <button class="btn btn-primary" style="flex:1;" onclick="deployStrategy('Rally Fade', this)">Deploy</button>
+      </div>
     </div>
   </div>
 
@@ -263,44 +242,122 @@
         </div>
         <span class="badge badge-blue">● Beta</span>
       </div>
-
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem;">
-        <div>
-          <div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">12-MO RETURN</div>
-          <div style="font-size:1.8rem;font-weight:700;color:var(--green);">+41.9%</div>
-        </div>
-        <div>
-          <div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">SHARPE RATIO</div>
-          <div style="font-size:1.8rem;font-weight:700;">0.72</div>
-        </div>
+        <div><div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">12-MO RETURN</div><div style="font-size:1.8rem;font-weight:700;color:var(--green);">+41.9%</div></div>
+        <div><div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">SHARPE RATIO</div><div style="font-size:1.8rem;font-weight:700;">0.72</div></div>
       </div>
-
       <div style="display:flex;gap:1rem;padding:1rem;background:rgba(255,255,255,.03);border-radius:8px;margin-bottom:1.2rem;">
-        <div style="flex:1;text-align:center;">
-          <div style="font-size:.72rem;color:var(--muted);">WIN RATE</div>
-          <div style="font-weight:600;">54%</div>
-        </div>
-        <div style="flex:1;text-align:center;border-left:1px solid var(--border);">
-          <div style="font-size:.72rem;color:var(--muted);">MAX DD</div>
-          <div style="font-weight:600;color:var(--red);">-19.1%</div>
-        </div>
-        <div style="flex:1;text-align:center;border-left:1px solid var(--border);">
-          <div style="font-size:.72rem;color:var(--muted);">AVG HOLD</div>
-          <div style="font-weight:600;">5.4d</div>
-        </div>
+        <div class="mini-stat"><div class="lbl">WIN RATE</div><div class="val">54%</div></div>
+        <div class="mini-stat" style="border-left:1px solid var(--border);"><div class="lbl">MAX DD</div><div class="val" style="color:var(--red);">-19.1%</div></div>
+        <div class="mini-stat" style="border-left:1px solid var(--border);"><div class="lbl">AVG HOLD</div><div class="val">5.4d</div></div>
       </div>
-
-      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1.2rem;line-height:1.6;">
-        Targets high-beta growth stocks breaking out on above-average institutional volume. Pyramids into winners, cuts losers quickly. Designed for aggressive growth accounts. Higher risk profile.
-      </p>
-
       <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem;">
         <span class="badge" style="background:rgba(139,92,246,.12);color:#8b5cf6;">Growth</span>
         <span class="badge" style="background:rgba(139,92,246,.12);color:#8b5cf6;">Breakout</span>
         <span class="badge" style="background:rgba(139,92,246,.12);color:#8b5cf6;">High Risk</span>
       </div>
+      <div style="display:flex;gap:.5rem;">
+        <button class="btn btn-ghost" style="flex:1;" onclick="openDetail('high-beta')">View Details</button>
+        <button class="btn btn-primary" style="flex:1;" onclick="deployStrategy('High Beta Momentum', this)">Deploy</button>
+      </div>
+    </div>
+  </div>
 
-      <button class="btn btn-primary" style="width:100%;" onclick="deployStrategy('High Beta Momentum', this)">Deploy Strategy</button>
+  <!-- Mean Reversion -->
+  <div class="card" style="border-radius:14px;overflow:hidden;">
+    <div style="height:4px;background:linear-gradient(90deg,#06b6d4,#0ea5e9);"></div>
+    <div class="card-body">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.2rem;">
+        <div>
+          <div style="font-size:1.1rem;font-weight:700;">Mean Reversion</div>
+          <div style="font-size:.8rem;color:var(--muted);margin-top:.2rem;">Statistical pairs mean reversion</div>
+        </div>
+        <span class="badge badge-green">● Live</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem;">
+        <div><div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">12-MO RETURN</div><div style="font-size:1.8rem;font-weight:700;color:var(--green);">+18.4%</div></div>
+        <div><div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">SHARPE RATIO</div><div style="font-size:1.8rem;font-weight:700;">0.55</div></div>
+      </div>
+      <div style="display:flex;gap:1rem;padding:1rem;background:rgba(255,255,255,.03);border-radius:8px;margin-bottom:1.2rem;">
+        <div class="mini-stat"><div class="lbl">WIN RATE</div><div class="val">72%</div></div>
+        <div class="mini-stat" style="border-left:1px solid var(--border);"><div class="lbl">MAX DD</div><div class="val" style="color:var(--red);">-6.1%</div></div>
+        <div class="mini-stat" style="border-left:1px solid var(--border);"><div class="lbl">AVG HOLD</div><div class="val">4.7d</div></div>
+      </div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem;">
+        <span class="badge badge-coral">Pairs</span>
+        <span class="badge badge-coral">Low Vol</span>
+        <span class="badge badge-coral">Market Neutral</span>
+      </div>
+      <div style="display:flex;gap:.5rem;">
+        <button class="btn btn-ghost" style="flex:1;" onclick="openDetail('mean-reversion')">View Details</button>
+        <button class="btn btn-primary" style="flex:1;" onclick="deployStrategy('Mean Reversion', this)">Deploy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Momentum Breakout -->
+  <div class="card" style="border-radius:14px;overflow:hidden;">
+    <div style="height:4px;background:linear-gradient(90deg,#ff6b6b,#f59e0b);"></div>
+    <div class="card-body">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.2rem;">
+        <div>
+          <div style="font-size:1.1rem;font-weight:700;">Momentum Breakout</div>
+          <div style="font-size:.8rem;color:var(--muted);margin-top:.2rem;">Trend following on volume breakouts</div>
+        </div>
+        <span class="badge badge-green">● Live</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem;">
+        <div><div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">12-MO RETURN</div><div style="font-size:1.8rem;font-weight:700;color:var(--green);">+29.6%</div></div>
+        <div><div style="font-size:.75rem;color:var(--muted);margin-bottom:.3rem;">SHARPE RATIO</div><div style="font-size:1.8rem;font-weight:700;">0.68</div></div>
+      </div>
+      <div style="display:flex;gap:1rem;padding:1rem;background:rgba(255,255,255,.03);border-radius:8px;margin-bottom:1.2rem;">
+        <div class="mini-stat"><div class="lbl">WIN RATE</div><div class="val">58%</div></div>
+        <div class="mini-stat" style="border-left:1px solid var(--border);"><div class="lbl">MAX DD</div><div class="val" style="color:var(--red);">-14.3%</div></div>
+        <div class="mini-stat" style="border-left:1px solid var(--border);"><div class="lbl">AVG HOLD</div><div class="val">6.1d</div></div>
+      </div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem;">
+        <span class="badge badge-coral">Trend Follow</span>
+        <span class="badge badge-coral">Volume</span>
+        <span class="badge badge-coral">Medium Risk</span>
+      </div>
+      <div style="display:flex;gap:.5rem;">
+        <button class="btn btn-ghost" style="flex:1;" onclick="openDetail('momentum-breakout')">View Details</button>
+        <button class="btn btn-primary" style="flex:1;" onclick="deployStrategy('Momentum Breakout', this)">Deploy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom -->
+  <div class="card" style="border-radius:14px;overflow:hidden;">
+    <div style="height:4px;background:linear-gradient(90deg,#64748b,#94a3b8);"></div>
+    <div class="card-body">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.2rem;">
+        <div>
+          <div style="font-size:1.1rem;font-weight:700;">Custom</div>
+          <div style="font-size:.8rem;color:var(--muted);margin-top:.2rem;">Build your own strategy</div>
+        </div>
+        <span class="badge" style="background:rgba(100,116,139,.1);color:var(--muted);">Configure</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;height:80px;margin-bottom:1.2rem;">
+        <div style="text-align:center;color:var(--muted);">
+          <div style="font-size:2rem;margin-bottom:.4rem;">⚙️</div>
+          <div style="font-size:.82rem;">Define your own entry / exit logic</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:1rem;padding:1rem;background:rgba(255,255,255,.03);border-radius:8px;margin-bottom:1.2rem;">
+        <div class="mini-stat"><div class="lbl">WIN RATE</div><div class="val">—</div></div>
+        <div class="mini-stat" style="border-left:1px solid var(--border);"><div class="lbl">MAX DD</div><div class="val">—</div></div>
+        <div class="mini-stat" style="border-left:1px solid var(--border);"><div class="lbl">AVG HOLD</div><div class="val">—</div></div>
+      </div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem;">
+        <span class="badge" style="background:rgba(100,116,139,.1);color:var(--muted);">Custom Logic</span>
+        <span class="badge" style="background:rgba(100,116,139,.1);color:var(--muted);">Any Asset</span>
+        <span class="badge" style="background:rgba(100,116,139,.1);color:var(--muted);">User-Defined Risk</span>
+      </div>
+      <div style="display:flex;gap:.5rem;">
+        <button class="btn btn-ghost" style="flex:1;" onclick="openDetail('custom')">View Details</button>
+        <button class="btn btn-primary" style="flex:1;" onclick="deployStrategy('Custom', this)">Configure</button>
+      </div>
     </div>
   </div>
 
@@ -311,10 +368,304 @@
   ⚠️ <strong style="color:var(--yellow);">Risk Disclosure:</strong> All trading strategies involve risk of loss. Past performance is not indicative of future results. You may lose some or all of your invested capital. Please ensure you have a broker connected before deploying.
 </div>
 
+<!-- ── 6-Tab Detail Modal ── -->
+<div id="detail-modal" class="detail-modal-backdrop">
+  <div class="detail-modal">
+    <div class="detail-modal-header">
+      <div>
+        <div id="dm-name" style="font-size:1.2rem;font-weight:700;"></div>
+        <div id="dm-sub" style="font-size:.82rem;color:var(--muted);margin-top:.2rem;"></div>
+      </div>
+      <button onclick="closeDetail()" style="background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;padding:.2rem;">✕</button>
+    </div>
+
+    <div style="padding:0 1.5rem;">
+      <div class="strat-tab-bar">
+        <button class="strat-tab active" onclick="switchTab(0)">Overview</button>
+        <button class="strat-tab" onclick="switchTab(1)">Signals</button>
+        <button class="strat-tab" onclick="switchTab(2)">Risk</button>
+        <button class="strat-tab" onclick="switchTab(3)">Backtest</button>
+        <button class="strat-tab" onclick="switchTab(4)">Trades</button>
+        <button class="strat-tab" onclick="switchTab(5)">Deploy</button>
+      </div>
+    </div>
+
+    <div style="padding:0 1.5rem 1.5rem;">
+
+      <!-- Tab 0: Overview -->
+      <div id="tab-0" class="strat-tab-panel active">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+          <div style="padding:1rem;background:rgba(255,255,255,.03);border-radius:8px;text-align:center;">
+            <div style="font-size:.72rem;color:var(--muted);margin-bottom:.3rem;">12-MO RETURN</div>
+            <div id="dm-ret" style="font-size:1.6rem;font-weight:700;color:var(--green);"></div>
+          </div>
+          <div style="padding:1rem;background:rgba(255,255,255,.03);border-radius:8px;text-align:center;">
+            <div style="font-size:.72rem;color:var(--muted);margin-bottom:.3rem;">SHARPE</div>
+            <div id="dm-sharpe" style="font-size:1.6rem;font-weight:700;"></div>
+          </div>
+          <div style="padding:1rem;background:rgba(255,255,255,.03);border-radius:8px;text-align:center;">
+            <div style="font-size:.72rem;color:var(--muted);margin-bottom:.3rem;">WIN RATE</div>
+            <div id="dm-wr" style="font-size:1.6rem;font-weight:700;"></div>
+          </div>
+        </div>
+        <p id="dm-desc" style="font-size:.88rem;color:var(--muted);line-height:1.7;margin-bottom:1.2rem;"></p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div style="padding:1rem;background:rgba(255,255,255,.03);border-radius:8px;">
+            <div style="font-size:.72rem;color:var(--muted);margin-bottom:.5rem;">UNIVERSE</div>
+            <div id="dm-universe" style="font-size:.88rem;font-weight:600;"></div>
+          </div>
+          <div style="padding:1rem;background:rgba(255,255,255,.03);border-radius:8px;">
+            <div style="font-size:.72rem;color:var(--muted);margin-bottom:.5rem;">FREQUENCY</div>
+            <div id="dm-freq" style="font-size:.88rem;font-weight:600;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 1: Signals -->
+      <div id="tab-1" class="strat-tab-panel">
+        <div style="margin-bottom:1.2rem;">
+          <div style="font-weight:600;margin-bottom:.75rem;color:#ff6b6b;">📈 Entry Signals</div>
+          <ul id="dm-entry" style="list-style:none;padding:0;font-size:.85rem;color:var(--muted);line-height:2.2;"></ul>
+        </div>
+        <div style="margin-bottom:1.2rem;">
+          <div style="font-weight:600;margin-bottom:.75rem;color:#ff6b6b;">📉 Exit Signals</div>
+          <ul id="dm-exit" style="list-style:none;padding:0;font-size:.85rem;color:var(--muted);line-height:2.2;"></ul>
+        </div>
+        <div>
+          <div style="font-weight:600;margin-bottom:.75rem;">🔧 Indicators Used</div>
+          <div id="dm-indicators" style="display:flex;gap:.5rem;flex-wrap:wrap;"></div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Risk -->
+      <div id="tab-2" class="strat-tab-panel">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+          <div style="padding:1rem;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:8px;">
+            <div style="font-size:.72rem;color:var(--muted);margin-bottom:.3rem;">MAX DRAWDOWN</div>
+            <div id="dm-dd" style="font-size:1.4rem;font-weight:700;color:var(--red);"></div>
+          </div>
+          <div style="padding:1rem;background:rgba(255,255,255,.03);border-radius:8px;">
+            <div style="font-size:.72rem;color:var(--muted);margin-bottom:.3rem;">AVG HOLD TIME</div>
+            <div id="dm-hold" style="font-size:1.4rem;font-weight:700;"></div>
+          </div>
+        </div>
+        <div id="dm-risk-items" style="display:grid;gap:.75rem;"></div>
+      </div>
+
+      <!-- Tab 3: Backtest -->
+      <div id="tab-3" class="strat-tab-panel">
+        <div style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;">Monthly returns (last 12 months, simulated backtest)</div>
+        <div id="dm-bt-bars" class="monthly-bar" style="margin-bottom:.75rem;"></div>
+        <div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--muted);margin-bottom:1.5rem;" id="dm-bt-labels"></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;">
+          <div style="padding:.75rem;background:rgba(255,255,255,.03);border-radius:8px;text-align:center;">
+            <div style="font-size:.7rem;color:var(--muted);">BEST MONTH</div>
+            <div id="dm-bt-best" style="font-weight:700;color:var(--green);margin-top:.3rem;"></div>
+          </div>
+          <div style="padding:.75rem;background:rgba(255,255,255,.03);border-radius:8px;text-align:center;">
+            <div style="font-size:.7rem;color:var(--muted);">WORST MONTH</div>
+            <div id="dm-bt-worst" style="font-weight:700;color:var(--red);margin-top:.3rem;"></div>
+          </div>
+          <div style="padding:.75rem;background:rgba(255,255,255,.03);border-radius:8px;text-align:center;">
+            <div style="font-size:.7rem;color:var(--muted);">AVG MONTHLY</div>
+            <div id="dm-bt-avg" style="font-weight:700;margin-top:.3rem;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 4: Trades -->
+      <div id="tab-4" class="strat-tab-panel">
+        <div style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;">Recent simulated trades</div>
+        <div id="dm-trades"></div>
+      </div>
+
+      <!-- Tab 5: Deploy -->
+      <div id="tab-5" class="strat-tab-panel">
+        <div style="padding:1.2rem;background:rgba(255,107,107,.06);border:1px solid rgba(255,107,107,.2);border-radius:10px;margin-bottom:1.5rem;">
+          <div style="font-weight:600;margin-bottom:.5rem;">Ready to deploy <span id="dm-deploy-name"></span>?</div>
+          <div style="font-size:.85rem;color:var(--muted);line-height:1.6;">This strategy will begin live trading on your connected broker immediately. Ensure your position sizing and risk parameters are configured below.</div>
+        </div>
+        <div style="display:grid;gap:1rem;margin-bottom:1.5rem;">
+          <div>
+            <label style="display:block;font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:.4rem;">CAPITAL ALLOCATION ($)</label>
+            <input type="number" value="10000" min="1000" step="1000" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:.7rem 1rem;border-radius:8px;font-size:.9rem;outline:none;">
+          </div>
+          <div>
+            <label style="display:block;font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:.4rem;">MAX RISK PER TRADE</label>
+            <select style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:.7rem 1rem;border-radius:8px;font-size:.9rem;outline:none;">
+              <option>1% of capital</option>
+              <option selected>2% of capital</option>
+              <option>5% of capital</option>
+            </select>
+          </div>
+        </div>
+        <button id="dm-deploy-btn" class="btn btn-primary" style="width:100%;background:#ff6b6b;border-color:#ff6b6b;" onclick="deployFromModal()">Deploy Strategy</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <script>
+const STRATEGIES = {
+  'dip-recovery': {
+    name: 'Dip Recovery', sub: 'Mean reversion on oversold equities',
+    ret: '+31.2%', sharpe: '0.81', wr: '67%', dd: '-8.4%', hold: '3.2d',
+    universe: 'S&P 500 Large Cap', freq: 'Daily signals',
+    desc: 'Identifies large-cap equities experiencing short-term overselling relative to sector peers. Enters on confirmed support, exits on RSI normalization. Suitable for moderate risk tolerance with consistent win rate.',
+    entry: ['RSI(14) below 30 on daily close','Price within 2% of 20-day support level','Sector relative strength positive','Volume confirmation on entry bar'],
+    exit: ['RSI(14) crosses above 55','Price hits 1.5× ATR profit target','Time-based exit after 5 trading days','Stop-loss at 2× ATR below entry'],
+    indicators: ['RSI(14)', 'ATR(14)', 'SMA(20)', 'VWAP', 'Sector RS'],
+    months: [2.1, 3.4, -1.2, 4.2, 1.8, 3.1, -0.8, 5.2, 2.3, 1.4, 4.1, 3.6],
+    risk: ['Position sizing: 2–4% of portfolio per trade','Stop-loss: 2× ATR below entry price','Maximum open positions: 6 concurrent','Correlation filter: max 0.7 between positions'],
+    trades: [['AAPL','Long','2.4%','3d'],['MSFT','Long','1.8%','2d'],['GOOGL','Long','-0.9%','1d'],['AMZN','Long','3.1%','4d'],['META','Long','2.2%','3d']]
+  },
+  'rally-fade': {
+    name: 'Rally Fade', sub: 'Short overextended momentum',
+    ret: '+22.7%', sharpe: '0.64', wr: '61%', dd: '-11.2%', hold: '1.8d',
+    universe: 'Mid & Large Cap Equities', freq: 'Intraday + Daily',
+    desc: 'Shorts equities showing parabolic price extension with exhausted buying volume. Uses ATR-based stops and scale-in short entries at resistance. Best in choppy or bearish markets.',
+    entry: ['RSI(14) above 75 on daily close','Price 15%+ above 20-day MA','Volume declining on recent up days','Intraday reversal candle pattern confirmed'],
+    exit: ['Price drops to 20-day MA','RSI crosses below 55','Stop-loss at 1.5× ATR above entry','Time-based exit after 3 trading days'],
+    indicators: ['RSI(14)', 'ATR(14)', 'SMA(20)', 'OBV', 'MACD'],
+    months: [1.4, 2.8, -3.1, 3.6, -1.2, 2.1, 4.4, -2.1, 1.9, 3.2, -1.8, 2.4],
+    risk: ['Short-selling requires margin account','Position sizing: 1–3% of portfolio','Stop-loss: 1.5× ATR above short entry','Avoid during strong bull trends'],
+    trades: [['TSLA','Short','3.2%','2d'],['NVDA','Short','1.5%','1d'],['AMD','Short','-1.8%','1d'],['RIVN','Short','4.1%','3d'],['PLTR','Short','2.0%','2d']]
+  },
+  'high-beta': {
+    name: 'High Beta Momentum', sub: 'Ride institutional breakouts',
+    ret: '+41.9%', sharpe: '0.72', wr: '54%', dd: '-19.1%', hold: '5.4d',
+    universe: 'High-Beta Growth Stocks', freq: 'Daily signals',
+    desc: 'Targets high-beta growth stocks breaking out on above-average institutional volume. Pyramids into winners, cuts losers quickly. Designed for aggressive growth accounts. Higher risk profile.',
+    entry: ['Price breaks 52-week high on 2× average volume','Relative strength rank in top 10%','Institutional ownership increasing QoQ','Sector in confirmed uptrend'],
+    exit: ['Price closes below 10-day MA','Volume dries up on up days','Trailing stop: 3× ATR below recent high','25% profit-take partial exit'],
+    indicators: ['RS Rating', 'Volume MA(50)', 'ATR(10)', 'EMA(10)', 'Inst. Ownership'],
+    months: [5.2, -2.1, 8.4, -4.2, 6.1, 3.8, -5.1, 7.3, 4.2, -1.8, 6.4, 5.1],
+    risk: ['High volatility — suitable for growth accounts only','Position sizing: 3–6% of portfolio','Trailing stop: 3× ATR below recent high','Maximum 4 concurrent high-beta positions'],
+    trades: [['SMCI','Long','8.1%','6d'],['MSTR','Long','-4.2%','2d'],['ASTS','Long','12.3%','8d'],['IONQ','Long','5.4%','5d'],['RKLB','Long','3.8%','4d']]
+  },
+  'mean-reversion': {
+    name: 'Mean Reversion', sub: 'Statistical pairs mean reversion',
+    ret: '+18.4%', sharpe: '0.55', wr: '72%', dd: '-6.1%', hold: '4.7d',
+    universe: 'Cointegrated Stock Pairs', freq: 'Daily signals',
+    desc: 'Exploits statistical mean reversion between cointegrated stock pairs. Long the underperformer, short the outperformer when the spread deviates beyond 2 standard deviations. Market-neutral by design.',
+    entry: ['Spread z-score exceeds 2.0 standard deviations','Cointegration confirmed (p-value < 0.05)','Both legs have sufficient liquidity','No earnings within 5 days'],
+    exit: ['Spread z-score returns to 0 (mean)','Stop-loss at 3.5 standard deviations','Time-based exit after 10 trading days','Correlation breakdown detected'],
+    indicators: ['Z-Score', 'Cointegration Test', 'Half-Life', 'Bollinger Bands', 'Correlation'],
+    months: [1.2, 2.1, 0.8, 2.4, 1.6, 1.9, 0.4, 2.8, 1.1, 1.7, 2.0, 1.8],
+    risk: ['Market-neutral — hedged against broad market moves','Position sizing: equal dollar amounts per pair leg','Maximum spread deviation stop: 3.5 SD','Maximum 4 pairs trading simultaneously'],
+    trades: [['XOM/CVX','L/S','1.8%','5d'],['KO/PEP','L/S','1.2%','3d'],['BAC/JPM','L/S','-0.6%','2d'],['GLD/SLV','L/S','2.4%','6d'],['AMGN/BIIB','L/S','1.5%','4d']]
+  },
+  'momentum-breakout': {
+    name: 'Momentum Breakout', sub: 'Trend following on volume breakouts',
+    ret: '+29.6%', sharpe: '0.68', wr: '58%', dd: '-14.3%', hold: '6.1d',
+    universe: 'Large & Mid Cap Equities', freq: 'Daily signals',
+    desc: 'Captures trend continuation following confirmed volume breakouts above key resistance levels. Uses multi-timeframe confirmation and enters after the first pullback post-breakout.',
+    entry: ['Price breaks above 20-week resistance on 1.5× volume','Weekly RSI above 50 and rising','Daily MACD bullish crossover','Pullback to breakout level within 3 days'],
+    exit: ['Price closes below breakout level','Weekly MACD bearish crossover','Trailing stop: 2× ATR below recent swing low','Target: measured move from base pattern'],
+    indicators: ['MACD(12,26,9)', 'Volume MA(20)', 'ATR(20)', 'RSI(14) weekly', 'Support/Resistance'],
+    months: [3.8, -1.2, 5.1, 2.4, -3.6, 4.2, 1.8, 6.3, -2.1, 3.5, 4.0, 2.4],
+    risk: ['Trend-following — performs best in trending markets','Position sizing: 2–4% of portfolio','Stop-loss below breakout level','Avoid in sideways/choppy markets'],
+    trades: [['JPM','Long','4.2%','7d'],['COST','Long','3.1%','5d'],['UNH','Long','-2.4%','3d'],['V','Long','5.8%','8d'],['HD','Long','2.9%','6d']]
+  },
+  'custom': {
+    name: 'Custom Strategy', sub: 'Define your own entry / exit logic',
+    ret: '—', sharpe: '—', wr: '—', dd: '—', hold: '—',
+    universe: 'Any asset class', freq: 'User-configured',
+    desc: 'Build and deploy your own quantitative strategy. Define custom entry/exit rules, select indicators, set risk parameters, and run backtests before going live. Full code editor available.',
+    entry: ['Define your own entry conditions','Combine any supported indicators','Set custom filters (volume, volatility, sector)','Optional: ML-based signal integration'],
+    exit: ['Define your own exit logic','Set profit targets and stop-losses','Time-based or signal-based exits','Trailing stop configuration'],
+    indicators: ['Any supported indicator', 'Custom formulas', 'External data feeds', 'ML signals (beta)'],
+    months: [0,0,0,0,0,0,0,0,0,0,0,0],
+    risk: ['Fully user-configured risk parameters','Set maximum position size','Define correlation limits','Custom stop-loss methodology'],
+    trades: []
+  }
+};
+
+let currentStrategy = null;
+let currentTab = 0;
+
+function openDetail(id) {
+  const s = STRATEGIES[id];
+  if (!s) return;
+  currentStrategy = id;
+  currentTab = 0;
+
+  document.getElementById('dm-name').textContent = s.name;
+  document.getElementById('dm-sub').textContent = s.sub;
+  document.getElementById('dm-ret').textContent = s.ret;
+  document.getElementById('dm-sharpe').textContent = s.sharpe;
+  document.getElementById('dm-wr').textContent = s.wr;
+  document.getElementById('dm-dd').textContent = s.dd;
+  document.getElementById('dm-hold').textContent = s.hold;
+  document.getElementById('dm-desc').textContent = s.desc;
+  document.getElementById('dm-universe').textContent = s.universe;
+  document.getElementById('dm-freq').textContent = s.freq;
+  document.getElementById('dm-deploy-name').textContent = s.name;
+
+  // Signals
+  document.getElementById('dm-entry').innerHTML = s.entry.map(e => '<li>→ ' + e + '</li>').join('');
+  document.getElementById('dm-exit').innerHTML = s.exit.map(e => '<li>← ' + e + '</li>').join('');
+  document.getElementById('dm-indicators').innerHTML = s.indicators.map(i => '<span class="badge badge-coral">' + i + '</span>').join('');
+
+  // Risk
+  document.getElementById('dm-risk-items').innerHTML = s.risk.map(r =>
+    '<div style="padding:.7rem 1rem;background:rgba(255,255,255,.03);border-radius:8px;font-size:.84rem;color:var(--muted);">🛡️ ' + r + '</div>'
+  ).join('');
+
+  // Backtest bars
+  const months = ['Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar'];
+  const vals = s.months;
+  const maxAbs = Math.max(...vals.map(Math.abs), 1);
+  const barsEl = document.getElementById('dm-bt-bars');
+  barsEl.innerHTML = vals.map((v, i) => {
+    const h = Math.max(4, Math.abs(v) / maxAbs * 56);
+    const color = v >= 0 ? '#10b981' : '#ef4444';
+    return '<div class="m-bar" style="height:' + h + 'px;background:' + color + ';opacity:.8;" title="' + months[i] + ': ' + (v >= 0 ? '+' : '') + v + '%"></div>';
+  }).join('');
+  document.getElementById('dm-bt-labels').innerHTML = months.map(m => '<span>' + m + '</span>').join('');
+  const best = Math.max(...vals), worst = Math.min(...vals), avg = vals.reduce((a,b)=>a+b,0)/vals.length;
+  document.getElementById('dm-bt-best').textContent = (best >= 0 ? '+' : '') + best.toFixed(1) + '%';
+  document.getElementById('dm-bt-worst').textContent = (worst >= 0 ? '+' : '') + worst.toFixed(1) + '%';
+  document.getElementById('dm-bt-avg').textContent = (avg >= 0 ? '+' : '') + avg.toFixed(1) + '%';
+
+  // Trades
+  const tradesEl = document.getElementById('dm-trades');
+  if (s.trades.length === 0) {
+    tradesEl.innerHTML = '<div style="text-align:center;color:var(--muted);padding:2rem;font-size:.85rem;">No historical trades — configure and run a backtest first.</div>';
+  } else {
+    tradesEl.innerHTML = '<div class="trade-row" style="font-size:.75rem;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);"><span>TICKER</span><span>SIDE</span><span>P&L</span><span>HOLD</span></div>' +
+      s.trades.map(t => {
+        const pnlColor = t[2].startsWith('-') ? 'var(--red)' : 'var(--green)';
+        return '<div class="trade-row"><span style="font-weight:600;">' + t[0] + '</span><span>' + t[1] + '</span><span style="color:' + pnlColor + ';font-weight:600;">' + t[2] + '</span><span style="color:var(--muted);">' + t[3] + '</span></div>';
+      }).join('');
+  }
+
+  switchTab(0);
+  document.getElementById('detail-modal').classList.add('open');
+}
+
+function closeDetail() {
+  document.getElementById('detail-modal').classList.remove('open');
+}
+
+function switchTab(idx) {
+  currentTab = idx;
+  document.querySelectorAll('.strat-tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+  document.querySelectorAll('.strat-tab-panel').forEach((p, i) => p.classList.toggle('active', i === idx));
+}
+
+function deployFromModal() {
+  const btn = document.getElementById('dm-deploy-btn');
+  btn.disabled = true; btn.textContent = 'Deploying…';
+  setTimeout(() => {
+    closeDetail();
+    showToast('Strategy "' + STRATEGIES[currentStrategy].name + '" deployed!', 'success');
+  }, 1200);
+}
+
 function deployStrategy(name, btn) {
-  btn.disabled = true;
-  btn.textContent = 'Deploying...';
+  btn.disabled = true; btn.textContent = 'Deploying...';
   setTimeout(() => {
     showToast('Strategy "' + name + '" deployed successfully!', 'success');
     btn.textContent = '✓ Deployed';
@@ -323,6 +674,10 @@ function deployStrategy(name, btn) {
     btn.style.border = '1px solid rgba(16,185,129,.3)';
   }, 1200);
 }
+
+document.getElementById('detail-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeDetail();
+});
 </script>
 
   </div>

@@ -42,9 +42,11 @@
       </div>
       <p style="font-size:.85rem;color:var(--muted);line-height:1.6;margin-bottom:1.2rem;">{{ desc }}</p>
       {% if available %}
-      <button class="btn btn-ghost" style="width:100%;" onclick="openConnectModal('{{ name }}', '{{ id }}')">
-        {% if connection and connection['broker'] == name %}✓ Connected{% else %}Connect{% endif %}
-      </button>
+      {% if connection and connection['broker'] == name %}
+      <button class="btn btn-ghost" style="width:100%;color:var(--green);border-color:rgba(16,185,129,.3);" onclick="openConnectModal('{{ name }}', '{{ id }}')">✓ Connected</button>
+      {% else %}
+      <button class="btn" style="width:100%;background:#ff6b6b;color:#fff;border:1px solid #ff6b6b;font-weight:600;" onclick="openConnectModal('{{ name }}', '{{ id }}')">Connect</button>
+      {% endif %}
       {% else %}
       <button class="btn btn-ghost" style="width:100%;opacity:.5;cursor:not-allowed;" disabled>Coming Soon</button>
       {% endif %}
