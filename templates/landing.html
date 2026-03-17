@@ -5,6 +5,27 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="api-base" content="/rpc">
 <title>Reccos Capital — AI-Powered Trading Tools</title>
+<script>
+/* SPA router — runs before any rendering.
+   In production, ALL paths are rewritten to index.html by the static artifact.
+   This script detects non-root paths and swaps in the correct page via /api/render. */
+(function(){
+  var path = window.location.pathname;
+  if (path === '/' || path === '') return; // Landing page — render normally
+  // Hide to prevent flash of wrong content while fetching
+  document.documentElement.style.visibility = 'hidden';
+  fetch('/api/render?path=' + encodeURIComponent(path))
+    .then(function(r){ return r.text(); })
+    .then(function(html){
+      document.open();
+      document.write(html);
+      document.close();
+    })
+    .catch(function(){
+      document.documentElement.style.visibility = ''; // Show landing page on error
+    });
+})();
+</script>
 <style>
   :root {
     --bg: #0a0e1a;

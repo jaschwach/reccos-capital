@@ -177,6 +177,29 @@ function startServer(): void {
   const server = http.createServer((clientReq, clientRes) => {
     const rawPath = clientReq.url ?? "/";
 
+    // /api/render?path=<urlpath> — serve static file for SPA router in index.html
+    // The reccos-capital static artifact rewrites /* → /index.html (SPA mode).
+    // index.html detects the current path and fetches the correct page via this
+    // endpoint (which reaches the api-server because /api/ is routed here).
+    if (rawPath.startsWith("/api/render")) {
+      const qs = rawPath.includes("?") ? rawPath.slice(rawPath.indexOf("?")) : "";
+      const params = new URLSearchParams(qs);
+      const pagePath = params.get("path") || "/";
+      const filePath = resolveStatic(pagePath);
+      if (filePath) {
+        try {
+          serveFile(filePath, clientRes);
+        } catch {
+          clientRes.writeHead(500, { "Content-Type": "text/plain" });
+          clientRes.end("Internal Server Error");
+        }
+      } else {
+        clientRes.writeHead(404, { "Content-Type": "text/plain" });
+        clientRes.end("Not Found");
+      }
+      return;
+    }
+
     // /api/* → proxy to Flask as /rpc/*
     if (rawPath.startsWith("/api/") || rawPath === "/api") {
       const flaskPath = "/rpc/" + rawPath.slice("/api/".length);
