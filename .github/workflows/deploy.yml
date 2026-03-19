@@ -1,0 +1,24 @@
+name: Deploy to Replit Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Replit Deployment
+        env:
+          REPLIT_API_KEY: ${{ secrets.REPLIT_API_KEY }}
+        run: |
+          echo "Push to main received at $(date)"
+          echo "Triggering Replit production deploy..."
+          curl -s -w "\nHTTP %{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer $REPLIT_API_KEY" \
+            -H "Content-Type: application/json" \
+            "https://replit.com/api/v1/repls/fd221d28-05a5-42ab-85ce-974b5ca553ec/deployments" \
+            -d '{"type":"autoscale"}' || true
+          echo "Deploy step complete."
