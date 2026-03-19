@@ -16,12 +16,11 @@ jobs:
           echo "Push to main received at $(date)"
           echo "Triggering Replit production deploy..."
           curl -s -w "\nHTTP %{http_code}" \
-            -X POST \
+            -X POST "https://replit.com/api/v1/deployments" \
             -H "Authorization: Bearer $REPLIT_API_KEY" \
             -H "Content-Type: application/json" \
             -H "X-Requested-With: XMLHttpRequest" \
             -H "Origin: https://replit.com" \
             -H "Referer: https://replit.com/" \
-            "https://replit.com/api/v1/repls/fd221d28-05a5-42ab-85ce-974b5ca553ec/deployments" \
-            -d '{"type":"autoscale"}' || true
+            -d '{"replId":"fd221d28-05a5-42ab-85ce-974b5ca553ec","type":"autoscale"}' || true
           echo "Deploy step complete."
