@@ -1,4 +1,4 @@
-name: Deploy to Replit Production
+name: Notify Jory to Publish
 
 on:
   push:
@@ -6,21 +6,21 @@ on:
       - main
 
 jobs:
-  deploy:
+  notify:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Replit Deployment
+      - name: Send Slack notification
         env:
-          REPLIT_API_KEY: ${{ secrets.REPLIT_API_KEY }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
-          echo "Push to main received at $(date)"
-          echo "Triggering Replit production deploy..."
-          curl -s -w "\nHTTP %{http_code}" \
-            -X POST "https://replit.com/api/v1/deployments" \
-            -H "Authorization: Bearer $REPLIT_API_KEY" \
+          PUSHER="${{ github.actor }}"
+          COMMIT="${{ github.sha }}"
+          SHORT_COMMIT="${COMMIT:0:7}"
+          MESSAGE="${{ github.event.head_commit.message }}"
+          COMPARE_URL="${{ github.event.compare }}"
+
+          curl -s -X POST "$SLACK_WEBHOOK_URL" \
             -H "Content-Type: application/json" \
-            -H "X-Requested-With: XMLHttpRequest" \
-            -H "Origin: https://replit.com" \
-            -H "Referer: https://replit.com/" \
-            -d '{"replId":"fd221d28-05a5-42ab-85ce-974b5ca553ec","type":"autoscale"}' || true
-          echo "Deploy step complete."
+            -d "{
+              \"text\": \":rocket: *New code pushed to Reccos Capital*\\n*By:* $PUSHER\\n*Commit:* \`$SHORT_COMMIT\` — $MESSAGE\\n*Changes:* $COMPARE_URL\\n\\n:point_right: Please <https://replit.com/@jschwach/reccos-capital|click Publish in Replit> to deploy to production.\"
+            }"
